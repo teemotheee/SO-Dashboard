@@ -1,0 +1,509 @@
+Dim OldValues As Collection
+Dim plant_name As String ' Variable to store the plant name
+
+Private Sub Worksheet_SelectionChange(ByVal Target As Range)
+        Dim cell As Range
+        Dim Key As String
+        
+        ' Ensure OldValues is initialized
+        If OldValues Is Nothing Then
+            Set OldValues = New Collection
+        End If
+        
+        ' Clear the old values collection
+        Set OldValues = Nothing
+        Set OldValues = New Collection
+        
+        ' Loop through each cell in the target range and store the old values
+        For Each cell In Target
+            Key = cell.Address
+            ' Store old values, treating empty cells as empty string
+            If IsEmpty(cell.Value) Then
+                OldValues.Add "", Key
+            Else
+                OldValues.Add cell.Value, Key
+            End If
+        Next cell
+    End Sub
+
+Private Sub Worksheet_Change(ByVal Target As Range)
+    Dim cell As Range
+    Dim OldValue As Variant
+    Dim Key As String
+    Dim LogSheet As Worksheet
+    Dim LogSheet2 As Worksheet
+    Dim NextRow As Long
+    Dim NextRow2 As Long
+    Dim NewValue As Variant
+    Dim TrackRanges As Range
+    Dim ColumnARange As Range
+    Dim c As Range
+    Dim FirstDataRow As Long
+    Dim ChangeDetails As Collection
+    Dim ChangeDetail As Variant
+    Dim lastLogRow As Long
+    Dim LastLogValue As Variant
+    Dim timeDifference As Double
+    Dim NewState As Integer
+    Dim LastLogState As Integer
+    Dim PreviousLogExists As Boolean
+    Dim GeneratorCode As String
+    Dim ChangesSummary As String
+    Dim UseLastLogRow As Boolean
+    Dim logTime As String
+    Dim plant_name As String
+    Dim LastLogTime As Date
+    Dim NewLog As Boolean
+    Dim ColumnsFilled As Boolean
+    Dim ExistingRow As Long
+    Dim LogCode As String
+
+    ' Define the range to check in column A
+    Set ColumnARange = Me.Range("A1:A" & Me.Cells(Me.Rows.Count, "A").End(xlUp).Row)
+
+    ' Determine the maximum row containing "Subtotal" or "subtotal"
+    Dim MaxLogRow As Long
+    MaxLogRow = 0
+    For Each c In ColumnARange
+        If InStr(1, LCase(c.Value), "subtotal") > 0 Then
+            MaxLogRow = c.Row
+        End If
+    Next c
+
+    ' If no "Subtotal" found, set to last row of column A
+    If MaxLogRow = 0 Then
+        MaxLogRow = Me.Cells(Me.Rows.Count, "A").End(xlUp).Row
+    End If
+
+    ' Check if the changed cells intersect with the defined ranges
+    If Application.Intersect(Target, Me.Rows("1:" & MaxLogRow)) Is Nothing Then
+        Exit Sub ' Exit if no intersection with rows up to MaxLogRow
+    End If
+
+    ' Initialize the union of ranges from columns F to AC
+    Set TrackRanges = Nothing
+
+    ' Determine the last row containing "Subtotal" or "subtotal"
+    FirstDataRow = Target.Row ' Start searching from the row of the selected cell
+
+    ' Loop upwards from the selected cell to find the plant name
+    Do While FirstDataRow >= 1
+        If Me.Cells(FirstDataRow, "A").Interior.ColorIndex <> xlNone Then
+            plant_name = Me.Cells(FirstDataRow, "A").Value
+            Exit Do
+        End If
+        FirstDataRow = FirstDataRow - 1
+    Loop
+
+    ' If no plant name found, set it to empty string
+    If plant_name = "" Then
+        plant_name = "Unknown" ' Set a default value or handle as needed
+    End If
+
+    ' Loop through column A to determine the tracking ranges
+    For Each c In ColumnARange
+        ' Check conditions: row >= FirstDataRow, not a subtotal, and within columns F to AC
+        If c.Row >= FirstDataRow And _
+           c.Interior.ColorIndex = xlNone And _
+           InStr(1, LCase(c.Value), "subtotal") = 0 Then
+
+            ' Check if TrackRanges is initialized
+            If TrackRanges Is Nothing Then
+                Set TrackRanges = Me.Range("F" & c.Row & ":AC" & c.Row)
+            Else
+                Set TrackRanges = Union(TrackRanges, Me.Range("F" & c.Row & ":AC" & c.Row))
+            End If
+        End If
+    Next c
+
+    ' Define the sheet to log changes
+    Set LogSheet2 = ThisWorkbook.Sheets("ACTION LOGS")
+
+    ' Initialize the collection to store changes
+    Set ChangeDetails = New Collection
+
+    ' Loop through the changed cells and collect the changes
+    For Each cell In Target
+        If Not Application.Intersect(cell, TrackRanges) Is Nothing Then
+            Key = cell.Address
+            
+            ' Retrieve old value from OldValues collection
+            On Error Resume Next
+            OldValue = OldValues(Key)
+            On Error GoTo 0
+            
+            
+            
+            ' Treat empty cells as empty string
+            If IsEmpty(cell.Value) Then
+                NewValue = 0
+            Else
+                If cell.Value = 0 Then
+                    NewValue = ""
+                Else
+                    NewValue = cell.Value
+                End If
+            End If
+
+            ' Check if the change should be skipped
+            If ShouldSkipChange(OldValue, NewValue) Then
+                GoTo NextCell ' Skip logging for this change
+            End If
+
+            ' Determine the new state
+            If NewValue = 0 Or NewValue = "" Then
+                NewState = 0
+            Else
+                NewState = 1
+            End If
+
+            ' Construct the generator code
+            GeneratorCode = plant_name & "_" & Me.Range("A" & cell.Row).Value
+            LogCode = Key & " " & Me.Name ' Construct the log code
+
+            ' Find the last log for the same generator code in GENERATOR SWITCHING LOGS sheet
+            On Error Resume Next
+            lastLogRow = LogSheet.Columns(7).Find(what:=GeneratorCode, lookat:=xlWhole, searchdirection:=xlPrevious).Row
+            On Error GoTo 0
+
+            ' Find the last log for the same generator code in CHRONOLOGICAL SWITCHING LOGS sheet
+            On Error Resume Next
+            lastlogrow2 = LogSheet2.Columns(4).Find(what:=GeneratorCode, lookat:=xlWhole, searchdirection:=xlPrevious).Row
+            On Error GoTo 0
+
+            ' Initialize ColumnsFilled flag
+            ColumnsFilled = False
+
+            ' Check if a previous log exists in GENERATOR SWITCHING LOGS sheet
+            If lastlogrow2 > 0 Then
+                ' Get the previous log values
+                LastLogValue = LogSheet2.Cells(lastlogrow2, 7).Value
+                
+                ' Determine whether to use LastLogRow based on change from nonzero to zero or empty
+                If (LastLogValue <> 0 And NewValue = 0) Or (LastLogValue <> "" And NewValue = "") Then
+                    UseLastLogRow = True
+                Else
+                    UseLastLogRow = False
+                End If
+            Else
+                ' If no previous log, set time difference to 0
+                timeDifference = 0
+                PreviousLogExists = False
+                UseLastLogRow = False
+            End If
+
+            ' Skip logging if new value is the same as last logged value
+            If NewValue = LastLogValue Then
+                GoTo NextCell ' Skip this change
+            End If
+
+            If (NewValue <> 0 And NewValue <> "" And NewValue <> "CMS" And NewValue <> "cms") And (LastLogValue <> 0) Then
+'                MsgBox "here"
+                If LastLogValue = "cms" Or LastLogValue = "CMS" Then
+                
+                Else
+'                    MsgBox "the new value is" & NewValue & "and the latstlogvalue is " & LastLogValue
+                    GoTo NextCell ' Skip this change
+                End If
+                
+            End If
+'            MsgBox ("the old value is " & OldValue & " and the new value is " & NewValue)
+            If OldValue = NewValue Then
+                OldValue = 0
+            End If
+            
+            
+            
+            
+            ' Add the change detail to the collection for later confirmation/logging
+            ChangeDetails.Add Array(Key, OldValue, NewValue, NewState, timeDifference, GeneratorCode, UseLastLogRow, NewLog, LogCode)
+        End If
+NextCell:
+    Next cell
+    
+    ' Build the changes summary
+    If ChangeDetails.Count > 0 Then
+        'Check if Action Logs is Filtered
+        'Check if Action Logs is Filtered
+        If ThisWorkbook.Sheets("ACTION LOGS").FilterMode And ThisWorkbook.Sheets("GEN SWITCHING LOGS").FilterMode Then
+            MsgBox "!! WARNING: FILTER DETECTED !!" & vbNewLine & vbNewLine & _
+                    "Action Logs and Gen Switching Logs are currently filtered!" & vbNewLine & vbNewLine & _
+                    "DON'T MAKE OTHERS REDO YOUR WORK." & vbNewLine & vbNewLine & _
+                    "Not everything is visible. Please REMOVE the filter or RESTORE the sheet.", _
+                    vbCritical, "!!LOGS FILTER WARNING!!"
+        ' Revert changes if the user selects Cancel
+            Application.EnableEvents = False
+            For Each ChangeDetail In ChangeDetails
+                Key = ChangeDetail(0)
+                OldValue = ChangeDetail(1)
+                Me.Range(Key).Value = OldValue
+            Next ChangeDetail
+            Application.EnableEvents = True
+            Exit Sub
+        ElseIf ThisWorkbook.Sheets("ACTION LOGS").FilterMode Then
+            MsgBox "!! WARNING: FILTER DETECTED !!" & vbNewLine & vbNewLine & _
+                    "Action Logs is currently filtered!" & vbNewLine & vbNewLine & _
+                    "DON'T MAKE OTHERS REDO YOUR WORK." & vbNewLine & vbNewLine & _
+                    "Not everything is visible. Please REMOVE the filter or RESTORE the sheet.", _
+                    vbCritical, "!!LOGS FILTER WARNING!!"
+        ' Revert changes if the user selects Cancel
+            Application.EnableEvents = False
+            For Each ChangeDetail In ChangeDetails
+                Key = ChangeDetail(0)
+                OldValue = ChangeDetail(1)
+                Me.Range(Key).Value = OldValue
+            Next ChangeDetail
+            Application.EnableEvents = True
+            Exit Sub
+        ElseIf ThisWorkbook.Sheets("GEN SWITCHING LOGS").FilterMode Then
+            MsgBox "!! WARNING: FILTER DETECTED !!" & vbNewLine & vbNewLine & _
+                    "Gen Switching Logs is currently filtered!" & vbNewLine & vbNewLine & _
+                    "DON'T MAKE OTHERS REDO YOUR WORK." & vbNewLine & vbNewLine & _
+                    "Not everything is visible. Please REMOVE the filter or RESTORE the sheet.", _
+                    vbCritical, "!!LOGS FILTER WARNING!!"
+        ' Revert changes if the user selects Cancel
+            Application.EnableEvents = False
+            For Each ChangeDetail In ChangeDetails
+                Key = ChangeDetail(0)
+                OldValue = ChangeDetail(1)
+                Me.Range(Key).Value = OldValue
+            Next ChangeDetail
+            Application.EnableEvents = True
+            Exit Sub
+        End If
+        
+        ChangesSummary = "The following changes have been detected:" & vbCrLf & vbCrLf
+        For Each ChangeDetail In ChangeDetails
+            GeneratorCode = ChangeDetail(5)
+            NewValue = ChangeDetail(2)
+            ' Replace empty or space NewValue with zero
+            ChangesSummary = ChangesSummary & "Generator Code: " & GeneratorCode & ", New Value: " & NewValue & vbCrLf
+        Next ChangeDetail
+
+        ' Show the custom UserForm with editable time input
+        With UserForm1
+            .TextBox1.Value = Format(Time, "HHmm") & "H" ' Set default time
+            .Label1.Caption = ChangesSummary ' Display changes summary
+            .Show
+            .CommandButton1.Default = True ' Set the "Yes" button as default
+        End With
+
+        ' Get the time from the UserForm
+        logTime = UserForm1.TextBox1.Value
+
+        ' Process user response from the UserForm
+        If UserForm1.Tag = "Log" Then
+            For Each ChangeDetail In ChangeDetails
+                Key = ChangeDetail(0)
+                OldValue = ChangeDetail(1)
+                NewValue = ChangeDetail(2)
+                NewState = ChangeDetail(3)
+                timeDifference = ChangeDetail(4)
+                GeneratorCode = ChangeDetail(5)
+                UseLastLogRow = ChangeDetail(6)
+                NewLog = ChangeDetail(7)
+                LogCode = ChangeDetail(8)
+
+                ' Find the existing log code in the CHRONOLOGICAL SWITCHING LOGS sheet
+                ExistingRow = 0
+                On Error Resume Next
+                ExistingRow = LogSheet2.Columns(9).Find(what:=LogCode, lookat:=xlWhole, searchdirection:=xlPrevious).Row
+                On Error GoTo 0
+                If NewValue = "" Or NewValue = " " Then
+                    NewValue = 0
+                End If
+                ' Log changes in CHRONOLOGICAL SWITCHING LOGS sheet
+                If ExistingRow > 0 Then
+                    
+                    If LogSheet2.Cells(ExistingRow, 7).Value <> NewValue Then
+                        ' Check if the unit has been previously offlined
+                        Dim previousValue As Variant
+                        previousValue = LogSheet2.Cells(ExistingRow, 7).Value ' Adjust the column number if necessary
+                        If (IsEmpty(previousValue) Or previousValue = 0) And (NewValue <> 0 Or IsEmpty(previousValue)) Then 'it has been previously offlined therefore new log
+'                            MsgBox ("ASD1")
+'                            MsgBox "THERE EXISTS A ROW: GEN HAS BEEN OFFLINED BEFORE"
+                            NextRow2 = LogSheet2.Cells(LogSheet2.Rows.Count, 1).End(xlUp).Row + 1
+                            LogSheet2.Cells(NextRow2, 1).Value = NextRow2 ' Log counter
+                            LogSheet2.Cells(NextRow2, 2).Value = Date ' Log online date
+                            LogSheet2.Cells(NextRow2, 3).Value = logTime ' Log online time
+                            LogSheet2.Cells(NextRow2, 4).Value = GeneratorCode ' Log generator code
+                            LogSheet2.Cells(NextRow2, 7).Value = NewValue ' Log new value
+'                            LogSheet2.Cells(NextRow2, 9).Value = LogCode ' Log address and sheet name
+                            LogSheet2.Hyperlinks.Add Anchor:=LogSheet2.Cells(NextRow2, 9), Address:=Me.Name, SubAddress:="'" & Me.Name & "'!" & Key, TextToDisplay:="LogCode"
+
+                            
+                        ElseIf previousValue <> 0 Then
+'                            MsgBox "THERE EXISTS A ROW: GEN HAS NOT BEEN OFFLINED BEFORE"
+                            NextRow2 = LogSheet2.Cells(LogSheet2.Rows.Count, 1).End(xlUp).Row + 1
+                            If NewValue = 0 Then
+                                LogSheet2.Cells(NextRow2, 1).Value = NextRow2 ' Log counter
+                                LogSheet2.Cells(NextRow2, 2).Value = Date ' Log online date
+                                LogSheet2.Cells(NextRow2, 3).Value = logTime ' Log online time
+                                LogSheet2.Cells(NextRow2, 4).Value = GeneratorCode ' Log generator code
+                                LogSheet2.Cells(NextRow2, 7).Value = NewValue ' Log new value
+                                LogSheet2.Cells(NextRow2, 9).Value = LogCode ' Log address and sheet name
+                            Else
+                                LogSheet2.Cells(ExistingRow, 7).Value = NewValue ' Log new value
+                            End If
+                            
+                        
+                        
+                        Else
+'                            MsgBox ("ASD2")
+                            ' Log code already exists, update the existing row
+                            LogSheet2.Cells(ExistingRow, 3).Value = logTime ' Log online time
+                            LogSheet2.Cells(ExistingRow, 7).Value = NewValue ' Log new value
+                        End If
+                        
+                    Else
+                        
+'                        MsgBox ("ASD3")
+                        NextRow2 = LogSheet2.Cells(LogSheet2.Rows.Count, 1).End(xlUp).Row + 1
+                        LogSheet2.Cells(NextRow2, 1).Value = NextRow2 ' Log counter
+                        LogSheet2.Cells(NextRow2, 2).Value = Date ' Log online date
+                        LogSheet2.Cells(NextRow2, 3).Value = logTime ' Log online time
+                        LogSheet2.Cells(NextRow2, 4).Value = GeneratorCode ' Log generator code
+                        LogSheet2.Cells(NextRow2, 7).Value = NewValue ' Log new value
+                        LogSheet2.Cells(NextRow2, 9).Value = LogCode ' Log address and sheet name
+                        
+                        
+                    End If
+                    
+                Else
+                    ' Log code does not exist, log a new entry
+                    NextRow2 = LogSheet2.Cells(LogSheet2.Rows.Count, 1).End(xlUp).Row + 1
+                    If NewValue <> OldValue Then
+                        If NewValue = "cms" Or NewValue = "CMS" Then
+'                            MsgBox "cms2"
+                            LogSheet2.Cells(NextRow2, 1).Value = NextRow2 ' Log counter
+                            LogSheet2.Cells(NextRow2, 2).Value = Date ' Log online date
+                            LogSheet2.Cells(NextRow2, 3).Value = logTime ' Log online time
+                            LogSheet2.Cells(NextRow2, 4).Value = GeneratorCode ' Log generator code
+                            LogSheet2.Cells(NextRow2, 7).Value = NewValue ' Log new value
+'                            LogSheet2.Cells(NextRow2, 9).Value = LogCode ' Log address and sheet name
+                            LogSheet2.Hyperlinks.Add Anchor:=LogSheet2.Cells(NextRow2, 9), Address:="", SubAddress:="'" & Me.Name & "'!" & Key, TextToDisplay:=LogCode
+
+                        ElseIf NewValue <> 0 And LastLogValue <> 0 Then
+                            If (LastLogValue = "cms" Or LastLogValue = "CMS") Then
+                                LogSheet2.Cells(NextRow2, 1).Value = NextRow2 ' Log counter
+                                LogSheet2.Cells(NextRow2, 2).Value = Date ' Log online date
+                                LogSheet2.Cells(NextRow2, 3).Value = logTime ' Log online time
+                                LogSheet2.Cells(NextRow2, 4).Value = GeneratorCode ' Log generator code
+                                LogSheet2.Cells(NextRow2, 7).Value = NewValue ' Log new value
+            '                    LogSheet2.Cells(NextRow2, 9).Value = LogCode ' Log address and sheet name
+                                LogSheet2.Hyperlinks.Add Anchor:=LogSheet2.Cells(NextRow2, 9), Address:="", SubAddress:="'" & Me.Name & "'!" & Key, TextToDisplay:=LogCode
+                            End If
+                            
+                           Else
+                        
+                            LogSheet2.Cells(NextRow2, 1).Value = NextRow2 ' Log counter
+                            LogSheet2.Cells(NextRow2, 2).Value = Date ' Log online date
+                            LogSheet2.Cells(NextRow2, 3).Value = logTime ' Log online time
+                            LogSheet2.Cells(NextRow2, 4).Value = GeneratorCode ' Log generator code
+                            LogSheet2.Cells(NextRow2, 7).Value = NewValue ' Log new value
+        '                    LogSheet2.Cells(NextRow2, 9).Value = LogCode ' Log address and sheet name
+                            LogSheet2.Hyperlinks.Add Anchor:=LogSheet2.Cells(NextRow2, 9), Address:="", SubAddress:="'" & Me.Name & "'!" & Key, TextToDisplay:=LogCode
+                        End If
+                        
+                    End If
+                End If
+            Application.EnableEvents = False
+            Call LogGeneratorSwitches
+            Application.EnableEvents = True
+            Next ChangeDetail
+        ElseIf UserForm1.Tag = "NoLog" Then
+            ' Do nothing, changes are kept without logging
+        ElseIf UserForm1.Tag = "Cancel" Then
+            ' Revert changes if the user selects Cancel
+            Application.EnableEvents = False
+            For Each ChangeDetail In ChangeDetails
+                Key = ChangeDetail(0)
+                OldValue = ChangeDetail(1)
+                Me.Range(Key).Value = OldValue
+            Next ChangeDetail
+            Application.EnableEvents = True
+            Exit Sub
+        End If
+    End If
+    ' Re-enable Excel events and settings
+'    Application.EnableEvents = True
+'    Application.ScreenUpdating = True
+'    Application.Calculation = xlCalculationAutomatic
+'    Application.Calculate ' Force recalculation
+
+    Set ChangeDetails = Nothing ' Clear the collection
+End Sub
+
+Private Function ShouldSkipChange(OldValue As Variant, NewValue As Variant) As Boolean
+    ' Function to determine if the change should be skipped
+    If (OldValue = "" And NewValue = "") Or _
+       (OldValue = 0 And NewValue = 0) Or _
+       (OldValue = 0 And NewValue = "") Or _
+       (OldValue = "" And NewValue = 0) Then
+        ShouldSkipChange = True
+    ElseIf IsNumeric(OldValue) And IsNumeric(NewValue) Then
+        ' Skip if both are zero
+        If CDbl(OldValue) = 0 And CDbl(NewValue) = 0 Then
+            ShouldSkipChange = True
+        End If
+    End If
+    
+End Function
+
+Private Sub Worksheet_BeforeDoubleClick(ByVal Target As Range, Cancel As Boolean)
+    Dim MaxLogRow As Long
+    Dim ws As Worksheet
+    Dim lastRow As Long
+    Dim c As Range
+    Dim TargetColumn As Long
+    Dim CopyRange As Range
+    Dim DataArray As Variant
+    Dim area As Range
+
+    ' Define the worksheet
+    Set ws = Me
+
+    ' Define the range to check in column A for "Subtotal" and find MaxLogRow
+    lastRow = ws.Cells(ws.Rows.Count, "A").End(xlUp).Row
+    MaxLogRow = 0
+    For Each c In ws.Range("A1:A" & lastRow)
+        If InStr(1, LCase(c.Value), "subtotal") > 0 Then
+            MaxLogRow = c.Row
+        End If
+    Next c
+
+    ' If no "Subtotal" found, set MaxLogRow to the last row of column A
+    If MaxLogRow = 0 Then
+        MaxLogRow = lastRow
+    End If
+
+    ' Check if the double-clicked cell is within the eligible range (row 11 and columns F to AC)
+    If Target.Row = 11 And Not Intersect(Target, ws.Range("F11:AC11")) Is Nothing Then
+        TargetColumn = Target.Column
+
+        ' Loop through the rows to identify eligible rows
+        For Each c In ws.Range("A12:A" & MaxLogRow)
+            If c.Interior.ColorIndex = xlNone And InStr(1, LCase(c.Value), "subtotal") = 0 Then
+                If CopyRange Is Nothing Then
+                    Set CopyRange = ws.Cells(c.Row, TargetColumn)
+                Else
+                    Set CopyRange = Union(CopyRange, ws.Cells(c.Row, TargetColumn))
+                End If
+            End If
+        Next c
+
+        ' If there are eligible cells to copy
+        If Not CopyRange Is Nothing Then
+            ' Loop through each area in the non-contiguous range
+            For Each area In CopyRange.Areas
+                ' Copy the values of the area to the adjacent column
+'                area.Offset(0, 1).Value = area.Value
+                area.Offset(0, 1).Formula = area.Formula
+            Next area
+        End If
+
+        ' Cancel the default double-click action
+        Cancel = True
+    End If
+End Sub
+
