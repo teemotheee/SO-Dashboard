@@ -83,7 +83,7 @@ if page == "Current Day":
     else:
         df_freq_prev_dummy, df_demand_prev, _ = load_month_file(prev_month_name)
         prev_row_idx = prev_day.day - 1
-        df_demand_prev = df_demand_prev.iloc[[prev_row_idx]].copy().reset_index(d   rop=True)
+        df_demand_prev = df_demand_prev.iloc[[prev_row_idx]].copy().reset_index(drop=True)
 
     st.subheader("Demand – Current Day")
     st.dataframe(df_demand_today, hide_index=True, use_container_width=True)
