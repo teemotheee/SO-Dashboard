@@ -89,6 +89,7 @@ if page == "Current Day":
     st.dataframe(df_demand_today, hide_index=True, use_container_width=True)
 
     # Get current hour in Philippine time
+    
     ph_time = datetime.now(pytz.timezone("Asia/Manila"))
     current_hour = ph_time.hour + 1  # +1 because you want to include the current hour
 
