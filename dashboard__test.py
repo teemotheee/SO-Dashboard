@@ -48,11 +48,6 @@ def load_month_file(month_name):
     df_freq.columns = hour_labels
     df_demand.columns = hour_labels
     
-    if st.sidebar.button("Show Online Units"):
-        df_online_units = load_online_units(latest_file)
-        st.subheader("Online Units")
-        st.dataframe(df_online_units, hide_index=True, use_container_width=True)
-
     return df_freq, df_demand, latest_file
 
 @st.cache_data
