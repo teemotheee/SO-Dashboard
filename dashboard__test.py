@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 import pytz
 from datetime import datetime, timedelta
 import os
-from streamlit_autorefresh import st_autorefresh
 
 # =========================================================
 # PARAMETERS (GitHub-Deploy Friendly)
@@ -108,21 +107,25 @@ if df_freq is None:
 # CURRENT DAY VIEW
 # =========================================================
 if page == "Current Day":
-    # Automatically refresh every 1000 ms (1 second)
-    st_autorefresh(interval=1000, limit=None, key="clock_refresh")
+    # Sticky title instead of st.title
+    st.markdown("""
+        <style>
+        .sticky-title {
+            position: sticky;
+            top: 0;
+            background-color: white;
+            z-index: 999;
+            padding: 10px 0px;
+            text-align: center;
+            font-size: 32px;
+            font-weight: bold;
+            border-bottom: 2px solid #4CAF50; /* green underline */
+        }
+        </style>
+    """, unsafe_allow_html=True)
 
-    # Get current PH time
-    ph_time = datetime.now(pytz.timezone("Asia/Manila"))
-    ph_time_str = ph_time.strftime("%Y-%m-%d %H:%M:%S")
+    st.markdown('<div class="sticky-title">IGSOD PCC Dashboard</div>', unsafe_allow_html=True)
 
-    # Display clock above the title
-    st.markdown(
-        f"<div style='text-align:center; font-weight:bold; font-size:18px; margin-bottom:10px;'>{ph_time_str}</div>",
-        unsafe_allow_html=True
-    )
-
-
-    st.title("IGSOD PCC Dashboard")
 
     row_idx = today.day - 1
     df_freq_today = df_freq.iloc[[row_idx]].copy().reset_index(drop=True)
