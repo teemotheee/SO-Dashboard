@@ -92,19 +92,17 @@ if st.sidebar.button("⚡ Show/Hide Online Units"):
 # Display online units in sidebar if visible
 if st.session_state.online_units_visible:
     df_online_units = load_online_units(latest_file)
+    units = df_online_units["Unit"].tolist()  # just the unit names
 
-    # Keep only the Unit names
-    df_online_units = df_online_units[["Unit"]]
-
-    # Apply light blue background to the table
-    styled_df = df_online_units.style.set_table_styles([
-        {'selector': 'thead', 'props': [('background-color', '#B3D9FF'), ('color', 'black')]},
-        {'selector': 'tbody', 'props': [('background-color', '#E6F2FF')]}
-    ])
+    # Build HTML table with light blue
+    table_html = '<div style="max-height:400px; overflow-y:auto; background-color:#E6F2FF; border:1px solid #B3D9FF; border-radius:5px; padding:5px;">'
+    table_html += '<table style="border-collapse: collapse; width: 100%;">'
+    for unit in units:
+        table_html += f'<tr><td style="padding: 4px; border-bottom: 1px solid #B3D9FF;">{unit}</td></tr>'
+    table_html += '</table></div>'
 
     st.sidebar.subheader("Online Units")
-    st.sidebar.dataframe(styled_df, use_container_width=True, hide_index=True, height=400)
-
+    st.sidebar.markdown(table_html, unsafe_allow_html=True)
 
 if df_freq is None:
     st.stop()
