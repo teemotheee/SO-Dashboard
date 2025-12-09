@@ -107,36 +107,35 @@ if df_freq is None:
 # CURRENT DAY VIEW
 # =========================================================
 if page == "Current Day":
-    # Page config
     st.set_page_config(layout="wide")
 
-    # Fixed header CSS
+    # Add a title in the top area (fixed)
     st.markdown("""
         <style>
-        /* Fixed top header */
+        /* Fixed header at top */
         .stApp > .main > div:first-child {
             position: fixed;
             top: 0;
             width: 100%;
+            height: 70px;
+            line-height: 70px;
             background-color: #001f4d;
             color: white;
             font-size: 32px;
             font-weight: bold;
             text-align: center;
-            height: 70px;
-            line-height: 70px;
             z-index: 9999;
-            box-shadow: 0px 2px 5px rgba(0,0,0,0.3);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
         }
 
-        /* Push the content down so it doesn't overlap header */
+        /* Push content down so it doesn't overlap header */
         .app-content-padding {
             padding-top: 80px;
         }
         </style>
     """, unsafe_allow_html=True)
 
-    # Spacer div to push content down
+    # Spacer to push content below header
     st.markdown('<div class="app-content-padding"></div>', unsafe_allow_html=True)
 
     row_idx = today.day - 1
