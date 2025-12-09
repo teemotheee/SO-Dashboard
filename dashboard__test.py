@@ -9,6 +9,7 @@ import os
 # =========================================================
 # PARAMETERS (GitHub-Deploy Friendly)
 # =========================================================
+# Repo folder where app and Excel files are located
 folder_path = os.path.dirname(os.path.abspath(__file__))
 
 col_start = 2  # column C
@@ -24,7 +25,7 @@ hour_labels = [f"{str(h).zfill(2)}00H" for h in range(24)]
 st.set_page_config(layout="wide", page_title="Palawan Grid Dashboard")
 
 # =========================================================
-# HELPER FUNCTIONS
+# HELPER FUNCTION TO LOAD EXCEL FILE
 # =========================================================
 @st.cache_data
 def load_month_file(month_name):
@@ -57,7 +58,9 @@ def load_online_units(latest_file):
 
     # Filter rows where columns D(3), E(4), G(6) are empty
     df_online = df_log[
-        df_log[3].isna() & df_log[4].isna() & df_log[6].isna()
+        df_log[3].isna() &
+        df_log[4].isna() &
+        df_log[6].isna()
     ]
 
     # Keep only Unit Name (Column A)
@@ -66,70 +69,75 @@ def load_online_units(latest_file):
 
     return df_online_units
 
+
 # =========================================================
-# LOAD DATA
+# SELECT VIEW
+# =========================================================
+page = st.sidebar.selectbox("Select View", ["Current Day", "Full Month"])
+
+# =========================================================
+# CURRENT DATE AND MONTH
 # =========================================================
 today = datetime.today()
 current_month_name = today.strftime("%B")
 df_freq, df_demand, latest_file = load_month_file(current_month_name)
 
-if df_freq is None:
-    st.stop()
-
+# Load and show online units in sidebar immediately
 df_online_units = load_online_units(latest_file)
-units = df_online_units["Unit"].tolist()  # only unit names
+units = df_online_units["Unit"].tolist()  # just the unit names
 
-# =========================================================
-# LEFT SIDEBAR - ONLINE UNITS
-# =========================================================
-st.sidebar.subheader("Online Units")
-units_html = '''
+# Build HTML table with navy blue background and white text, centered
+table_html = '''
 <div style="max-height:400px; overflow-y:auto; background-color:#001f4d; border-radius:5px; padding:5px;">
-    <table style="border-collapse: collapse; width: 100%; text-align: center; color: white; font-weight:bold;">
+    <table style="border-collapse: collapse; width: 100%; text-align: center; color: white;">
 '''
 for unit in units:
-    units_html += f'<tr><td style="padding: 8px; border-bottom: 1px solid #004080;">{unit}</td></tr>'
-units_html += '</table></div>'
+    table_html += f'<tr><td style="padding: 8px; border-bottom: 1px solid #004080;">{unit}</td></tr>'
+table_html += '</table></div>'
 
-st.sidebar.markdown(units_html, unsafe_allow_html=True)
+st.sidebar.subheader("Online Units")
+st.sidebar.markdown(table_html, unsafe_allow_html=True)
 
-# =========================================================
-# FIXED TOP TITLE
-# =========================================================
-st.markdown("""
-<style>
-.fixed-header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    background-color: #001f4d;
-    color: white;
-    z-index: 9999; 
-    text-align: center;
-    font-size: 32px;
-    font-weight: bold;
-    padding: 10px 0;
-    box-shadow: 0px 2px 5px rgba(0,0,0,0.3);
-}
-.main-content {
-    padding-top: 70px;  /* Space for fixed header */
-}
-</style>
-""", unsafe_allow_html=True)
 
-st.markdown('<div class="fixed-header">IGSOD PCC Dashboard</div>', unsafe_allow_html=True)
-st.markdown('<div class="main-content">', unsafe_allow_html=True)
 
-# =========================================================
-# VIEW SELECTOR
-# =========================================================
-page = st.sidebar.selectbox("Select View", ["Current Day", "Full Month"])
+if df_freq is None:
+    st.stop()
 
 # =========================================================
 # CURRENT DAY VIEW
 # =========================================================
 if page == "Current Day":
+    # Fixed top header
+    st.markdown("""
+        <style>
+        .fixed-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            background-color: #001f4d;
+            color: white;
+            z-index: 9999; 
+            text-align: center;
+            font-size: 32px;
+            font-weight: bold;
+            line-height: 60px;  /* vertical centering */
+            box-shadow: 0px 2px 5px rgba(0,0,0,0.3);
+        }
+        .main-content {
+            padding-top: 70px;  /* Space for fixed header */
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown('<div class="fixed-header">IGSOD PCC Dashboard</div>', unsafe_allow_html=True)
+
+    # Main content
+    st.markdown('<div class="main-content">', unsafe_allow_html=True)
+    st.write("Your dashboard content goes here...")
+    st.markdown('</div>', unsafe_allow_html=True)
+
     row_idx = today.day - 1
     df_freq_today = df_freq.iloc[[row_idx]].copy().reset_index(drop=True)
     df_demand_today = df_demand.iloc[[row_idx]].copy().reset_index(drop=True)
@@ -147,8 +155,10 @@ if page == "Current Day":
     st.subheader("Demand – " + today.strftime("%Y-%m-%d"))
     st.dataframe(df_demand_today, hide_index=True, use_container_width=True)
 
+    # Get current hour in Philippine time
+
     ph_time = datetime.now(pytz.timezone("Asia/Manila"))
-    current_hour = ph_time.hour + 1
+    current_hour = ph_time.hour + 1  # +1 because you want to include the current hour
 
     y_today = df_demand_today.values.flatten().copy()
     y_today[current_hour:] = np.nan
@@ -170,6 +180,7 @@ if page == "Current Day":
 
     y_freq_today = df_freq_today.values.flatten().copy()
     y_freq_today[y_freq_today == 0] = np.nan
+
     y_freq_plot = np.full(24, np.nan)
     y_freq_plot[:len(y_freq_today)] = y_freq_today
 
@@ -190,10 +201,10 @@ if page == "Current Day":
 # FULL MONTH VIEW
 # =========================================================
 else:
-    st.subheader(f"Full Month – {current_month_name} Dashboard")
+    st.title(f"Full Month – {current_month_name} Dashboard")
+
     st.subheader("Full Month – Demand")
     st.dataframe(df_demand, hide_index=True, use_container_width=True)
+
     st.subheader("Full Month – Frequency")
     st.dataframe(df_freq, hide_index=True, use_container_width=True)
-
-st.markdown('</div>', unsafe_allow_html=True)  # Close main-content
