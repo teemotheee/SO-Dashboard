@@ -114,30 +114,34 @@ if page == "Current Day":
             top: 0;
             left: 0;
             width: 100%;
-            background-color: white;
+            height: 60px;              /* fixed height */
+            line-height: 60px;         /* vertical centering */
+            background-color: #001f4d; /* navy blue */
+            color: white;              /* font color */
             z-index: 1000;
             text-align: center;
             font-size: 32px;
             font-weight: bold;
-            padding: 10px 0;
             border-bottom: 2px solid #4CAF50;
+            box-shadow: 0px 2px 5px rgba(0,0,0,0.3);
         }
 
         /* Add padding to the top of the main content so it doesn't hide under the header */
         .main-content {
-            padding-top: 60px;
+            padding-top: 70px;  /* a bit more than header height */
         }
         </style>
     """, unsafe_allow_html=True)
 
     st.markdown('<div class="fixed-header">IGSOD PCC Dashboard</div>', unsafe_allow_html=True)
 
-    # Wrap all other content in a container with padding
+    # Wrap the rest of your dashboard content here
     st.markdown('<div class="main-content">', unsafe_allow_html=True)
 
-    # ... all your existing content (plots, tables, etc.) goes here ...
+    # ... your plots, tables, etc. ...
 
     st.markdown('</div>', unsafe_allow_html=True)
+
 
 
     row_idx = today.day - 1
