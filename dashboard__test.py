@@ -82,15 +82,46 @@ today = datetime.today()
 current_month_name = today.strftime("%B")
 df_freq, df_demand, latest_file = load_month_file(current_month_name)
 
-# Sidebar toggle
-if st.sidebar.button("⚡ Show/Hide Online Units"):
+# Initialize popup state
+if "online_units_visible" not in st.session_state:
+    st.session_state.online_units_visible = False
+
+# Toggle button above demand plot
+if st.button("⚡ Show/Hide Online Units"):
     st.session_state.online_units_visible = not st.session_state.online_units_visible
 
-# Show table in sidebar if visible
+# Display online units on the right as floating panel
 if st.session_state.online_units_visible:
     df_online_units = load_online_units(latest_file)
-    st.sidebar.subheader("Online Units")
-    st.sidebar.dataframe(df_online_units, use_container_width=True, height=400)
+    
+    # Keep only unit names
+    df_online_units = df_online_units[["Unit"]]
+
+    st.markdown("""
+        <style>
+        .right-panel {
+            position: fixed;
+            top: 80px;
+            right: 10px;
+            width: 250px;
+            max-height: 400px;
+            background-color: #D9EDF7;  /* light blue */
+            border: 1px solid #4CAF50;
+            border-radius: 8px;
+            padding: 10px;
+            overflow-y: auto;
+            z-index: 9999;
+            box-shadow: 0px 4px 12px rgba(0,0,0,0.25);
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown('<div class="right-panel">', unsafe_allow_html=True)
+    st.subheader("Online Units")
+    st.dataframe(df_online_units, hide_index=True, use_container_width=True)
+    if st.button("Close ❌"):
+        st.session_state.online_units_visible = False
+    st.markdown('</div>', unsafe_allow_html=True)
 
 
 if df_freq is None:
