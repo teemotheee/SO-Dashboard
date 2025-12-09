@@ -107,7 +107,26 @@ if df_freq is None:
 # CURRENT DAY VIEW
 # =========================================================
 if page == "Current Day":
-    st.title("IGSOD PCC Dashboard")
+    # CSS for sticky header
+    st.markdown("""
+    <style>
+    .sticky-header {
+        position: -webkit-sticky;
+        position: sticky;
+        top: 0;
+        background-color: #001f4d; /* navy blue */
+        color: white;
+        font-size: 32px;
+        font-weight: bold;
+        padding: 10px;
+        z-index: 999; /* stay on top of content */
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # Sticky header
+    st.markdown('<div class="sticky-header">IGSOD PCC Dashboard</div>', unsafe_allow_html=True)
+
 
     row_idx = today.day - 1
     df_freq_today = df_freq.iloc[[row_idx]].copy().reset_index(drop=True)
