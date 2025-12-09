@@ -82,10 +82,16 @@ today = datetime.today()
 current_month_name = today.strftime("%B")
 df_freq, df_demand, latest_file = load_month_file(current_month_name)
 
-if st.button("Show Online Units"):
+# Sidebar toggle
+if st.sidebar.button("⚡ Show/Hide Online Units"):
+    st.session_state.online_units_visible = not st.session_state.online_units_visible
+
+# Show table in sidebar if visible
+if st.session_state.online_units_visible:
     df_online_units = load_online_units(latest_file)
-    st.subheader("Online Units")
-    st.dataframe(df_online_units, hide_index=True, use_container_width=True)
+    st.sidebar.subheader("Online Units")
+    st.sidebar.dataframe(df_online_units, use_container_width=True, height=400)
+
 
 if df_freq is None:
     st.stop()
