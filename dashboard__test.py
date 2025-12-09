@@ -107,42 +107,37 @@ if df_freq is None:
 # CURRENT DAY VIEW
 # =========================================================
 if page == "Current Day":
+    # Page config
+    st.set_page_config(layout="wide")
+
+    # Fixed header CSS
     st.markdown("""
         <style>
-        .fixed-header {
+        /* Fixed top header */
+        .stApp > .main > div:first-child {
             position: fixed;
             top: 0;
-            left: 0;
             width: 100%;
-            height: 60px;              /* fixed height */
-            line-height: 60px;         /* vertical centering */
-            background-color: #001f4d; /* navy blue */
-            color: white;              /* font color */
-            z-index: 1000;
-            text-align: center;
+            background-color: #001f4d;
+            color: white;
             font-size: 32px;
             font-weight: bold;
-            border-bottom: 2px solid #4CAF50;
+            text-align: center;
+            height: 70px;
+            line-height: 70px;
+            z-index: 9999;
             box-shadow: 0px 2px 5px rgba(0,0,0,0.3);
         }
 
-        /* Add padding to the top of the main content so it doesn't hide under the header */
-        .main-content {
-            padding-top: 70px;  /* a bit more than header height */
+        /* Push the content down so it doesn't overlap header */
+        .app-content-padding {
+            padding-top: 80px;
         }
         </style>
     """, unsafe_allow_html=True)
 
-    st.markdown('<div class="fixed-header">IGSOD PCC Dashboard</div>', unsafe_allow_html=True)
-
-    # Wrap the rest of your dashboard content here
-    st.markdown('<div class="main-content">', unsafe_allow_html=True)
-
-    # ... your plots, tables, etc. ...
-
-    st.markdown('</div>', unsafe_allow_html=True)
-
-
+    # Spacer div to push content down
+    st.markdown('<div class="app-content-padding"></div>', unsafe_allow_html=True)
 
     row_idx = today.day - 1
     df_freq_today = df_freq.iloc[[row_idx]].copy().reset_index(drop=True)
