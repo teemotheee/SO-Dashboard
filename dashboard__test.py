@@ -82,45 +82,15 @@ today = datetime.today()
 current_month_name = today.strftime("%B")
 df_freq, df_demand, latest_file = load_month_file(current_month_name)
 
-# Initialize popup state
-if "online_units_visible" not in st.session_state:
-    st.session_state.online_units_visible = False
-
-# Toggle button
-if st.button("⚡ Show/Hide Online Units"):
+# Sidebar toggle
+if st.sidebar.button("⚡ Show/Hide Online Units"):
     st.session_state.online_units_visible = not st.session_state.online_units_visible
 
-# Only render the floating panel if visible
+# Show table in sidebar if visible
 if st.session_state.online_units_visible:
     df_online_units = load_online_units(latest_file)
-
-    # Inject floating box CSS with scroll
-    st.markdown("""
-    <style>
-    .floating-box {
-        position: fixed;
-        top: 80px;
-        right: 30px;
-        width: 350px;
-        max-height: 400px;
-        background-color: #ffffff;
-        border: 2px solid #4CAF50;
-        border-radius: 10px;
-        padding: 12px;
-        z-index: 9999;
-        box-shadow: 0px 0px 12px rgba(0,0,0,0.25);
-        overflow-y: auto;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-    # Render inside a div so it floats
-    st.markdown(f'<div class="floating-box">', unsafe_allow_html=True)
-    st.subheader("Online Units")
-    st.dataframe(df_online_units, hide_index=True, use_container_width=True)
-    if st.button("Close X"):
-        st.session_state.online_units_visible = False
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.sidebar.subheader("Online Units")
+    st.sidebar.dataframe(df_online_units, use_container_width=True, height=400)
 
 
 if df_freq is None:
