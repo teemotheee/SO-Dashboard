@@ -119,14 +119,14 @@ if page == "Current Day":
         width: 100%;
         background-color: #001f4d;  /* navy blue */
         color: white;
-        font-size: 32px;
+        font-size: 1000px;
         font-weight: bold;
         text-align: center;
         padding: 10px 0;
         z-index: 9999;
     }
     .main-content {
-        padding-top: 700px; /* height of fixed header + some spacing */
+        padding-top: 5px; /* height of fixed header + some spacing */
     }
     </style>
     """, unsafe_allow_html=True)
