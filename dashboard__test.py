@@ -121,7 +121,7 @@ if page == "Current Day":
         color: white;
         font-size: 32px;
         font-weight: bold;
-        text-align: center;
+        text-align: left;
         line-height: 1.2;
         padding-top: 60px;      /* top padding */
         padding-bottom: 15px;  /* bottom padding */
