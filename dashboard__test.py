@@ -107,36 +107,7 @@ if df_freq is None:
 # CURRENT DAY VIEW
 # =========================================================
 if page == "Current Day":
-    st.set_page_config(layout="wide")
-
-    # Add a title in the top area (fixed)
-    st.markdown("""
-        <style>
-        /* Fixed header at top */
-        .stApp > .main > div:first-child {
-            position: fixed;
-            top: 0;
-            width: 100%;
-            height: 70px;
-            line-height: 70px;
-            background-color: #001f4d;
-            color: white;
-            font-size: 32px;
-            font-weight: bold;
-            text-align: center;
-            z-index: 9999;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-        }
-
-        /* Push content down so it doesn't overlap header */
-        .app-content-padding {
-            padding-top: 80px;
-        }
-        </style>
-    """, unsafe_allow_html=True)
-
-    # Spacer to push content below header
-    st.markdown('<div class="app-content-padding"></div>', unsafe_allow_html=True)
+    st.title("IGSOD PCC Dashboard")
 
     row_idx = today.day - 1
     df_freq_today = df_freq.iloc[[row_idx]].copy().reset_index(drop=True)
