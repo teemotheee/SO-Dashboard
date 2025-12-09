@@ -47,8 +47,33 @@ def load_month_file(month_name):
 
     df_freq.columns = hour_labels
     df_demand.columns = hour_labels
+    
+    if st.sidebar.button("Show Online Units"):
+        df_online_units = load_online_units(latest_file)
+        st.subheader("Online Units")
+        st.dataframe(df_online_units, hide_index=True, use_container_width=True)
 
     return df_freq, df_demand, latest_file
+
+@st.cache_data
+def load_online_units(latest_file):
+    file_path = os.path.join(folder_path, latest_file)
+
+    df_log = pd.read_excel(file_path, sheet_name="GEN SWITCHING LOGS", header=None)
+
+    # Filter rows where columns D(3), E(4), G(6) are empty
+    df_online = df_log[
+        df_log[3].isna() &
+        df_log[4].isna() &
+        df_log[6].isna()
+    ]
+
+    # Keep only Unit Name (Column A)
+    df_online_units = df_online[[0]].copy()
+    df_online_units.columns = ["Unit"]
+
+    return df_online_units
+
 
 # =========================================================
 # SELECT VIEW
