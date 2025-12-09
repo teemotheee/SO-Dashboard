@@ -82,10 +82,47 @@ today = datetime.today()
 current_month_name = today.strftime("%B")
 df_freq, df_demand, latest_file = load_month_file(current_month_name)
 
-if st.button("Show Online Units"):
+# =========================================================
+# ONLINE UNITS FLOATING PANEL
+# =========================================================
+
+# Initialize popup state
+if "online_units_visible" not in st.session_state:
+    st.session_state.online_units_visible = False
+
+# Button placed BEFORE demand plot
+if st.button("⚡ Show Online Units"):
+    st.session_state.online_units_visible = not st.session_state.online_units_visible
+
+# If visible → display floating frame
+if st.session_state.online_units_visible:
     df_online_units = load_online_units(latest_file)
-    st.subheader("Online Units")
-    st.dataframe(df_online_units, hide_index=True, use_container_width=True)
+
+    st.markdown("""
+        <style>
+        .floating-box {
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            width: 300px;
+            background-color: #FFFFFF;
+            border: 2px solid #4CAF50;
+            border-radius: 10px;
+            padding: 12px;
+            z-index: 9999;
+            box-shadow: 0px 0px 12px rgba(0,0,0,0.25);
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    with st.container():
+        st.markdown('<div class="floating-box">', unsafe_allow_html=True)
+        st.subheader("Online Units")
+        st.dataframe(df_online_units, hide_index=True, use_container_width=True)
+        if st.button("Close ❌"):
+            st.session_state.online_units_visible = False
+        st.markdown('</div>', unsafe_allow_html=True)
+
 
 if df_freq is None:
     st.stop()
