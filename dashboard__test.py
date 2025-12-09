@@ -81,15 +81,26 @@ page = st.sidebar.selectbox("Select View", ["Current Day", "Full Month"])
 today = datetime.today()
 current_month_name = today.strftime("%B")
 df_freq, df_demand, latest_file = load_month_file(current_month_name)
-# Sidebar toggle
+# Initialize session state
+if "online_units_visible" not in st.session_state:
+    st.session_state.online_units_visible = False
+
+# Sidebar toggle button
 if st.sidebar.button("⚡ Show/Hide Online Units"):
     st.session_state.online_units_visible = not st.session_state.online_units_visible
 
-# Show table in sidebar if visible
+# Display online units in sidebar if visible
 if st.session_state.online_units_visible:
     df_online_units = load_online_units(latest_file)
+    df_online_units = df_online_units[["Unit"]]  # only show unit names
     st.sidebar.subheader("Online Units")
-    st.sidebar.dataframe(df_online_units, use_container_width=True, height=400)
+    st.sidebar.dataframe(
+        df_online_units.style.set_table_styles([
+            {'selector': 'thead', 'props': [('background-color', '#B3D9FF')]},
+            {'selector': 'tbody', 'props': [('background-color', '#E6F2FF')]}
+        ]),
+        use_container_width=True
+    )
 
 
 if df_freq is None:
