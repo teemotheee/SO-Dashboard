@@ -107,26 +107,35 @@ if df_freq is None:
 # CURRENT DAY VIEW
 # =========================================================
 if page == "Current Day":
-    # CSS for sticky header
+    st.set_page_config(layout="wide", page_title="Palawan Grid Dashboard")
+
+    # Fixed header
     st.markdown("""
     <style>
-    .sticky-header {
-        position: -webkit-sticky;
-        position: sticky;
+    .fixed-header {
+        position: fixed;
         top: 0;
-        background-color: #001f4d; /* navy blue */
+        left: 0;
+        width: 100%;
+        background-color: #001f4d;  /* navy blue */
         color: white;
         font-size: 32px;
         font-weight: bold;
-        padding: 10px;
-        z-index: 999; /* stay on top of content */
+        text-align: center;
+        padding: 10px 0;
+        z-index: 9999;
+    }
+    .main-content {
+        padding-top: 70px; /* height of fixed header + some spacing */
     }
     </style>
     """, unsafe_allow_html=True)
 
-    # Sticky header
-    st.markdown('<div class="sticky-header">IGSOD PCC Dashboard</div>', unsafe_allow_html=True)
+    # Header
+    st.markdown('<div class="fixed-header">IGSOD PCC Dashboard</div>', unsafe_allow_html=True)
 
+    # Main content container
+    st.markdown('<div class="main-content">', unsafe_allow_html=True)
 
     row_idx = today.day - 1
     df_freq_today = df_freq.iloc[[row_idx]].copy().reset_index(drop=True)
