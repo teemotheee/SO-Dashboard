@@ -82,14 +82,22 @@ today = datetime.today()
 current_month_name = today.strftime("%B")
 df_freq, df_demand, latest_file = load_month_file(current_month_name)
 
-
 # Load and show online units in sidebar immediately
 df_online_units = load_online_units(latest_file)
 units = df_online_units["Unit"].tolist()  # just the unit names
 
+# Current date and time in Manila
+ph_time = datetime.now(pytz.timezone("Asia/Manila"))
+date_str = ph_time.strftime("%Y-%m-%d")
+time_str = ph_time.strftime("%H:%M:%S")
+
 # Build HTML table with navy blue background and white text, centered
-table_html = '''
+table_html = f'''
 <div style="max-height:400px; overflow-y:auto; background-color:#001f4d; border-radius:5px; padding:5px;">
+    <div style="text-align:center; font-weight:bold; margin-bottom:10px;">
+        <div>{date_str}</div>
+        <div>{time_str}</div>
+    </div>
     <table style="border-collapse: collapse; width: 100%; text-align: center; color: white;">
 '''
 for unit in units:
@@ -98,7 +106,6 @@ table_html += '</table></div>'
 
 st.sidebar.subheader("Online Units")
 st.sidebar.markdown(table_html, unsafe_allow_html=True)
-
 
 
 if df_freq is None:
