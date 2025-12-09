@@ -107,7 +107,6 @@ if df_freq is None:
 # CURRENT DAY VIEW
 # =========================================================
 if page == "Current Day":
-    # Fixed top header
     st.markdown("""
         <style>
         .fixed-header {
@@ -115,28 +114,31 @@ if page == "Current Day":
             top: 0;
             left: 0;
             width: 100%;
-            height: 60px;
-            background-color: #001f4d;
-            color: white;
-            z-index: 9999; 
+            background-color: white;
+            z-index: 1000;
             text-align: center;
             font-size: 32px;
             font-weight: bold;
-            line-height: 60px;  /* vertical centering */
-            box-shadow: 0px 2px 5px rgba(0,0,0,0.3);
+            padding: 10px 0;
+            border-bottom: 2px solid #4CAF50;
         }
+
+        /* Add padding to the top of the main content so it doesn't hide under the header */
         .main-content {
-            padding-top: 70px;  /* Space for fixed header */
+            padding-top: 60px;
         }
         </style>
     """, unsafe_allow_html=True)
 
     st.markdown('<div class="fixed-header">IGSOD PCC Dashboard</div>', unsafe_allow_html=True)
 
-    # Main content
+    # Wrap all other content in a container with padding
     st.markdown('<div class="main-content">', unsafe_allow_html=True)
-    st.write("Your dashboard content goes here...")
+
+    # ... all your existing content (plots, tables, etc.) goes here ...
+
     st.markdown('</div>', unsafe_allow_html=True)
+
 
     row_idx = today.day - 1
     df_freq_today = df_freq.iloc[[row_idx]].copy().reset_index(drop=True)
