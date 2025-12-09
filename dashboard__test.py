@@ -107,6 +107,21 @@ if df_freq is None:
 # CURRENT DAY VIEW
 # =========================================================
 if page == "Current Day":
+    # Placeholder for clock
+    clock_placeholder = st.empty()
+
+    # Function to get current PH time string
+    def ph_time_str():
+        ph_time = datetime.now(pytz.timezone("Asia/Manila"))
+        return ph_time.strftime("%Y-%m-%d %H:%M:%S")
+
+    # Display clock above the main title
+    clock_placeholder.markdown(
+        f"<div style='text-align:center; font-weight:bold; font-size:18px; margin-bottom:10px;'>{ph_time_str()}</div>",
+        unsafe_allow_html=True
+    )
+
+
     st.title("IGSOD PCC Dashboard")
 
     row_idx = today.day - 1
