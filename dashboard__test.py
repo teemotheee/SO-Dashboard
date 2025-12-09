@@ -107,24 +107,37 @@ if df_freq is None:
 # CURRENT DAY VIEW
 # =========================================================
 if page == "Current Day":
-    # Sticky title instead of st.title
     st.markdown("""
         <style>
-        .sticky-title {
-            position: sticky;
+        .fixed-header {
+            position: fixed;
             top: 0;
+            left: 0;
+            width: 100%;
             background-color: white;
-            z-index: 999;
-            padding: 10px 0px;
+            z-index: 1000;
             text-align: center;
             font-size: 32px;
             font-weight: bold;
-            border-bottom: 2px solid #4CAF50; /* green underline */
+            padding: 10px 0;
+            border-bottom: 2px solid #4CAF50;
+        }
+
+        /* Add padding to the top of the main content so it doesn't hide under the header */
+        .main-content {
+            padding-top: 60px;
         }
         </style>
     """, unsafe_allow_html=True)
 
-    st.markdown('<div class="sticky-title">IGSOD PCC Dashboard</div>', unsafe_allow_html=True)
+    st.markdown('<div class="fixed-header">IGSOD PCC Dashboard</div>', unsafe_allow_html=True)
+
+    # Wrap all other content in a container with padding
+    st.markdown('<div class="main-content">', unsafe_allow_html=True)
+
+    # ... all your existing content (plots, tables, etc.) goes here ...
+
+    st.markdown('</div>', unsafe_allow_html=True)
 
 
     row_idx = today.day - 1
