@@ -82,6 +82,11 @@ today = datetime.today()
 current_month_name = today.strftime("%B")
 df_freq, df_demand, latest_file = load_month_file(current_month_name)
 
+if st.sidebar.button("Show Online Units"):
+    df_online_units = load_online_units(latest_file)
+    st.subheader("Online Units")
+    st.dataframe(df_online_units, hide_index=True, use_container_width=True)
+
 if df_freq is None:
     st.stop()
 
