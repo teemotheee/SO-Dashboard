@@ -81,28 +81,25 @@ page = st.sidebar.selectbox("Select View", ["Current Day", "Full Month"])
 today = datetime.today()
 current_month_name = today.strftime("%B")
 df_freq, df_demand, latest_file = load_month_file(current_month_name)
-# Initialize session state
-if "online_units_visible" not in st.session_state:
-    st.session_state.online_units_visible = False
 
-# Sidebar toggle button
-if st.sidebar.button("⚡ Show/Hide Online Units"):
-    st.session_state.online_units_visible = not st.session_state.online_units_visible
 
-# Display online units in sidebar if visible
-if st.session_state.online_units_visible:
-    df_online_units = load_online_units(latest_file)
-    units = df_online_units["Unit"].tolist()  # just the unit names
+# Load and show online units in sidebar immediately
+df_online_units = load_online_units(latest_file)
+units = df_online_units["Unit"].tolist()  # just the unit names
 
-    # Build HTML table with light blue
-    table_html = '<div style="max-height:400px; overflow-y:auto; background-color:#E6F2FF; border:1px solid #B3D9FF; border-radius:5px; padding:5px;">'
-    table_html += '<table style="border-collapse: collapse; width: 100%;">'
-    for unit in units:
-        table_html += f'<tr><td style="padding: 4px; border-bottom: 1px solid #B3D9FF;">{unit}</td></tr>'
-    table_html += '</table></div>'
+# Build HTML table with navy blue background and white text, centered
+table_html = '''
+<div style="max-height:400px; overflow-y:auto; background-color:#001f4d; border-radius:5px; padding:5px;">
+    <table style="border-collapse: collapse; width: 100%; text-align: center; color: white;">
+'''
+for unit in units:
+    table_html += f'<tr><td style="padding: 8px; border-bottom: 1px solid #004080;">{unit}</td></tr>'
+table_html += '</table></div>'
 
-    st.sidebar.subheader("Online Units")
-    st.sidebar.markdown(table_html, unsafe_allow_html=True)
+st.sidebar.subheader("Online Units")
+st.sidebar.markdown(table_html, unsafe_allow_html=True)
+
+
 
 if df_freq is None:
     st.stop()
