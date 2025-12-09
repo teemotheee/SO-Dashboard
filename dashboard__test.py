@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import pytz
 from datetime import datetime, timedelta
 import os
+from streamlit_autorefresh import st_autorefresh
 
 # =========================================================
 # PARAMETERS (GitHub-Deploy Friendly)
@@ -107,17 +108,16 @@ if df_freq is None:
 # CURRENT DAY VIEW
 # =========================================================
 if page == "Current Day":
-    # Placeholder for clock
-    clock_placeholder = st.empty()
+    # Automatically refresh every 1000 ms (1 second)
+    st_autorefresh(interval=1000, limit=None, key="clock_refresh")
 
-    # Function to get current PH time string
-    def ph_time_str():
-        ph_time = datetime.now(pytz.timezone("Asia/Manila"))
-        return ph_time.strftime("%Y-%m-%d %H:%M:%S")
+    # Get current PH time
+    ph_time = datetime.now(pytz.timezone("Asia/Manila"))
+    ph_time_str = ph_time.strftime("%Y-%m-%d %H:%M:%S")
 
-    # Display clock above the main title
-    clock_placeholder.markdown(
-        f"<div style='text-align:center; font-weight:bold; font-size:18px; margin-bottom:10px;'>{ph_time_str()}</div>",
+    # Display clock above the title
+    st.markdown(
+        f"<div style='text-align:center; font-weight:bold; font-size:18px; margin-bottom:10px;'>{ph_time_str}</div>",
         unsafe_allow_html=True
     )
 
