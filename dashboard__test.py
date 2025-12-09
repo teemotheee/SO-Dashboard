@@ -119,7 +119,7 @@ if page == "Current Day":
         width: 100%;
         background-color: #001f4d;  /* navy blue */
         color: white;
-        font-size: 200px;
+        font-size: 50px;
         font-weight: bold;
         text-align: center;
         padding: 10px 0;
