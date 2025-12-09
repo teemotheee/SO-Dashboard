@@ -92,7 +92,6 @@ if st.session_state.online_units_visible:
     st.sidebar.subheader("Online Units")
     st.sidebar.dataframe(df_online_units, use_container_width=True, height=400)
 
-
 if df_freq is None:
     st.stop()
 
