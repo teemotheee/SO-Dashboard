@@ -125,6 +125,7 @@ if page == "Current Day":
         line-height: 1.2;
         padding-top: 60px;      /* top padding */
         padding-bottom: 15px;  /* bottom padding */
+        padding-left: 20px;      /* space from the left edge */
         z-index: 9999;
     }
     .main-content {
