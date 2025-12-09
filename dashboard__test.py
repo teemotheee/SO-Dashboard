@@ -122,7 +122,7 @@ if page == "Current Day":
         font-size: 32px;
         font-weight: bold;
         text-align: center;
-        padding: 40px 10px;
+        padding: 60px 1px;
         z-index: 9999;
     }
     .main-content {
