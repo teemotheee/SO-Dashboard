@@ -126,7 +126,7 @@ if page == "Current Day":
         z-index: 9999;
     }
     .main-content {
-        padding-top: 70px; /* height of fixed header + some spacing */
+        padding-top: 700px; /* height of fixed header + some spacing */
     }
     </style>
     """, unsafe_allow_html=True)
