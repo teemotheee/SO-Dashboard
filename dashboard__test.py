@@ -165,25 +165,42 @@ if page == "Current Day":
     st.dataframe(df_demand_today, hide_index=True, use_container_width=True)
 
     # Get current hour in Philippine time
-
     ph_time = datetime.now(pytz.timezone("Asia/Manila"))
-    current_hour = ph_time.hour + 1  # +1 because you want to include the current hour
+    current_hour = ph_time.hour + 1  # +1 to include current hour
 
     y_today = df_demand_today.values.flatten().copy()
     y_today[current_hour:] = np.nan
     y_prev = df_demand_prev.values.flatten().copy()
 
-    fig, ax = plt.subplots(figsize=(12, 3))
-    ax.plot(hour_labels, y_prev, marker="x", linestyle="--", alpha=0.4, label="Previous Day")
-    ax.plot(hour_labels, y_today, marker="o", label="Today")
-    ax.set_xlabel("Hour")
-    ax.set_ylabel("Demand (MW)")
-    ax.set_title("Demand (MW)")
-    ax.grid(True)
-    ax.legend()
-    plt.xticks(rotation=45)
-    st.pyplot(fig)
+    # -------------------------
+    # FLICKERING CURRENT DAY DEMAND PLOT
+    # -------------------------
+    import time
+    demand_plot_placeholder = st.empty()  # placeholder for blinking plot
+    num_flickers = 6  # 3 on/off cycles
 
+    for i in range(num_flickers):
+        fig, ax = plt.subplots(figsize=(12, 3))
+
+        # Alternate color for blinking effect
+        color = "red" if i % 2 == 0 else "gray"
+
+        ax.plot(hour_labels, y_today, marker="o", label="Today", color=color)
+        ax.plot(hour_labels, y_prev, marker="x", linestyle="--", alpha=0.4, label="Previous Day")
+
+        ax.set_xlabel("Hour")
+        ax.set_ylabel("Demand (MW)")
+        ax.set_title("Demand (MW) – Current Day")
+        ax.grid(True)
+        ax.legend()
+        plt.xticks(rotation=45)
+
+        demand_plot_placeholder.pyplot(fig)
+        time.sleep(0.5)  # half-second flicker
+
+    # -------------------------
+    # FREQUENCY PLOT (unchanged)
+    # -------------------------
     st.subheader("Frequency – " + today.strftime("%Y-%m-%d"))
     st.dataframe(df_freq_today, hide_index=True, use_container_width=True)
 
