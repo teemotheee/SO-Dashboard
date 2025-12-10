@@ -5,10 +5,6 @@ import matplotlib.pyplot as plt
 import pytz
 from datetime import datetime, timedelta
 import os
-from streamlit_autorefresh import st_autorefresh
-
-# Refresh every 60 seconds
-st_autorefresh(interval=60000, key="auto_refresh")
 
 # =========================================================
 # PARAMETERS (GitHub-Deploy Friendly)
@@ -27,6 +23,13 @@ hour_labels = [f"{str(h).zfill(2)}00H" for h in range(24)]
 # STREAMLIT PAGE CONFIG
 # =========================================================
 st.set_page_config(layout="wide", page_title="Palawan Grid Dashboard")
+st.set_page_config(layout="wide", page_title="Palawan Grid Dashboard")
+
+# Auto refresh every 60 seconds
+st.markdown(
+    "<meta http-equiv='refresh' content='60'>",
+    unsafe_allow_html=True
+)
 
 # =========================================================
 # HELPER FUNCTION TO LOAD EXCEL FILE
