@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import pytz
 from datetime import datetime, timedelta
 import os
-import st_autorefresh
+from streamlit_autorefresh import st_autorefresh
 st_autorefresh(interval=60000)
 # =========================================================
 # PARAMETERS (GitHub-Deploy Friendly)
