@@ -147,7 +147,6 @@ if page == "Current Day":
     # Main content container
     st.markdown('<div class="main-content">', unsafe_allow_html=True)
 
-    # Today's and previous day's data
     row_idx = today.day - 1
     df_freq_today = df_freq.iloc[[row_idx]].copy().reset_index(drop=True)
     df_demand_today = df_demand.iloc[[row_idx]].copy().reset_index(drop=True)
@@ -165,40 +164,25 @@ if page == "Current Day":
     st.subheader("Demand – " + today.strftime("%Y-%m-%d"))
     st.dataframe(df_demand_today, hide_index=True, use_container_width=True)
 
-    # Prepare data for plotting
+    # Get current hour in Philippine time
     ph_time = datetime.now(pytz.timezone("Asia/Manila"))
-    current_hour = ph_time.hour + 1  # include current hour
+    current_hour = ph_time.hour + 1  # +1 because you want to include the current hour
 
     y_today = df_demand_today.values.flatten().copy()
     y_today[current_hour:] = np.nan
     y_prev = df_demand_prev.values.flatten().copy()
 
-    # -------------------------
-    # COUNT-BASED FLICKERING PLOT
-    # -------------------------
-    from streamlit_autorefresh import st_autorefresh
-
-    # Fast refresh just for blinking (0.5 sec)
-    blink_count = st_autorefresh(interval=500, limit=None, key="demand_blink")
-
-    # Alternate color based on blink_count
-    color = "red" if blink_count % 2 == 0 else "gray"
-
     fig, ax = plt.subplots(figsize=(12, 3))
-    ax.plot(hour_labels, y_today, marker="o", label="Today", color=color)
     ax.plot(hour_labels, y_prev, marker="x", linestyle="--", alpha=0.4, label="Previous Day")
+    ax.plot(hour_labels, y_today, marker="o", label="Today")
     ax.set_xlabel("Hour")
     ax.set_ylabel("Demand (MW)")
-    ax.set_title("Demand (MW) – Current Day")
+    ax.set_title("Demand (MW)")
     ax.grid(True)
     ax.legend()
     plt.xticks(rotation=45)
-
     st.pyplot(fig)
 
-    # -------------------------
-    # FREQUENCY PLOT (unchanged)
-    # -------------------------
     st.subheader("Frequency – " + today.strftime("%Y-%m-%d"))
     st.dataframe(df_freq_today, hide_index=True, use_container_width=True)
 
@@ -208,7 +192,7 @@ if page == "Current Day":
     y_freq_plot = np.full(24, np.nan)
     y_freq_plot[:len(y_freq_today)] = y_freq_today
 
-    fig2, ax2 = plt.subplots(figsize=(12, 3))
+    fig2, ax2 = plt.subplots(figsize(12, 3))
     ax2.plot(range(1, 25), y_freq_plot, marker="o", label="Today")
     ax2.set_xticks(range(1, 25))
     ax2.set_xticklabels([f"{str(h-1).zfill(2)}00H" for h in range(1, 25)])
