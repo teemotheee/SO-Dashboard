@@ -116,7 +116,7 @@ if df_freq is None:
 if page == "Current Day":
     st.set_page_config(layout="wide", page_title="Palawan Grid Dashboard")
 
-    # Fixed header styling
+    # Fixed header
     st.markdown("""
     <style>
     .fixed-header {
@@ -124,44 +124,33 @@ if page == "Current Day":
         top: 0;
         left: 0;
         width: 100%;
-        background-color: #001f4d;
+        background-color: #001f4d;  /* navy blue */
         color: white;
         font-size: 32px;
         font-weight: bold;
         text-align: left;
         line-height: 1.2;
-        padding-top: 60px;
-        padding-bottom: 15px;
-        padding-left: 350px;
+        padding-top: 60px;      /* top padding */
+        padding-bottom: 15px;  /* bottom padding */
+        padding-left: 350px;      /* space from the left edge */
         z-index: 9999;
     }
     .main-content {
-        padding-top: 30px;
-    }
-
-    /* Pulsing animation for latest point */
-    @keyframes pulse {
-        0%   { transform: scale(1); opacity: 1; }
-        50%  { transform: scale(1.8); opacity: 0.3; }
-        100% { transform: scale(1); opacity: 1; }
-    }
-
-    svg text.latest-point {
-        animation: pulse 1.2s infinite;
+        padding-top: 30px; /* height of fixed header + some spacing */
     }
     </style>
     """, unsafe_allow_html=True)
 
     # Header
     st.markdown('<div class="fixed-header">IGSOD PCC Dashboard</div>', unsafe_allow_html=True)
+
+    # Main content container
     st.markdown('<div class="main-content">', unsafe_allow_html=True)
 
-    # Data selection
     row_idx = today.day - 1
     df_freq_today = df_freq.iloc[[row_idx]].copy().reset_index(drop=True)
     df_demand_today = df_demand.iloc[[row_idx]].copy().reset_index(drop=True)
 
-    # Previous day data
     prev_day = today - timedelta(days=1)
     prev_month_name = prev_day.strftime("%B")
     if prev_month_name == current_month_name:
@@ -175,30 +164,18 @@ if page == "Current Day":
     st.subheader("Demand – " + today.strftime("%Y-%m-%d"))
     st.dataframe(df_demand_today, hide_index=True, use_container_width=True)
 
-    # Current hour PH time
+    # Get current hour in Philippine time
     ph_time = datetime.now(pytz.timezone("Asia/Manila"))
-    current_hour = ph_time.hour + 1
+    current_hour = ph_time.hour + 1  # +1 because you want to include the current hour
 
-    # Demand plots
     y_today = df_demand_today.values.flatten().copy()
     y_today[current_hour:] = np.nan
     y_prev = df_demand_prev.values.flatten().copy()
 
+    
     fig, ax = plt.subplots(figsize=(12, 3))
     ax.plot(hour_labels, y_prev, marker="x", linestyle="--", alpha=0.4, label="Previous Day")
     ax.plot(hour_labels, y_today, marker="o", label="Today")
-
-    # Pulsing latest demand point
-    latest_hour = current_hour - 1
-    if latest_hour >= 0:
-        latest_x = hour_labels[latest_hour]
-        latest_y = y_today[latest_hour]
-        ax.text(latest_x, latest_y, "⬤", fontsize=18, color="red",
-                ha="center", va="center",
-                fontweight="bold",
-                bbox=dict(facecolor="none", edgecolor="none"),
-                class_="latest-point")
-
     ax.set_xlabel("Hour")
     ax.set_ylabel("Demand (MW)")
     ax.set_title("Demand (MW)")
@@ -207,27 +184,17 @@ if page == "Current Day":
     plt.xticks(rotation=45)
     st.pyplot(fig)
 
-    # Frequency Table and Plot
     st.subheader("Frequency – Current Day")
     st.dataframe(df_freq_today, hide_index=True, use_container_width=True)
 
     y_freq_today = df_freq_today.values.flatten().copy()
     y_freq_today[y_freq_today == 0] = np.nan
+
     y_freq_plot = np.full(24, np.nan)
     y_freq_plot[:len(y_freq_today)] = y_freq_today
 
     fig2, ax2 = plt.subplots(figsize=(12, 3))
     ax2.plot(range(1, 25), y_freq_plot, marker="o", label="Today")
-
-    # Pulsing latest frequency point
-    if latest_hour >= 0 and not np.isnan(y_freq_plot[latest_hour]):
-        ax2.text(latest_hour + 1, y_freq_plot[latest_hour], "⬤",
-                 fontsize=18, color="red",
-                 ha="center", va="center",
-                 fontweight="bold",
-                 bbox=dict(facecolor="none", edgecolor="none"),
-                 class_="latest-point")
-
     ax2.set_xticks(range(1, 25))
     ax2.set_xticklabels([f"{str(h-1).zfill(2)}00H" for h in range(1, 25)])
     ax2.set_xlabel("Hour")
