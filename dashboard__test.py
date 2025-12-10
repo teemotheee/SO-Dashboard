@@ -113,10 +113,12 @@ if df_freq is None:
 # =========================================================
 # CURRENT DAY VIEW
 # =========================================================
+import time  # Needed for blinking loop
+
 if page == "Current Day":
     st.set_page_config(layout="wide", page_title="Palawan Grid Dashboard")
 
-    # Fixed header
+    # Fixed header styling
     st.markdown("""
     <style>
     .fixed-header {
@@ -124,33 +126,33 @@ if page == "Current Day":
         top: 0;
         left: 0;
         width: 100%;
-        background-color: #001f4d;  /* navy blue */
+        background-color: #001f4d;
         color: white;
         font-size: 32px;
         font-weight: bold;
         text-align: left;
         line-height: 1.2;
-        padding-top: 60px;      /* top padding */
-        padding-bottom: 15px;  /* bottom padding */
-        padding-left: 350px;      /* space from the left edge */
+        padding-top: 60px;
+        padding-bottom: 15px;
+        padding-left: 350px;
         z-index: 9999;
     }
     .main-content {
-        padding-top: 30px; /* height of fixed header + some spacing */
+        padding-top: 30px;
     }
     </style>
     """, unsafe_allow_html=True)
 
     # Header
     st.markdown('<div class="fixed-header">IGSOD PCC Dashboard</div>', unsafe_allow_html=True)
-
-    # Main content container
     st.markdown('<div class="main-content">', unsafe_allow_html=True)
 
+    # Get today's data
     row_idx = today.day - 1
     df_freq_today = df_freq.iloc[[row_idx]].copy().reset_index(drop=True)
     df_demand_today = df_demand.iloc[[row_idx]].copy().reset_index(drop=True)
 
+    # Previous day data
     prev_day = today - timedelta(days=1)
     prev_month_name = prev_day.strftime("%B")
     if prev_month_name == current_month_name:
@@ -161,21 +163,37 @@ if page == "Current Day":
         prev_row_idx = prev_day.day - 1
         df_demand_prev = df_demand_prev.iloc[[prev_row_idx]].copy().reset_index(drop=True)
 
+    # Display Demand Table
     st.subheader("Demand – " + today.strftime("%Y-%m-%d"))
     st.dataframe(df_demand_today, hide_index=True, use_container_width=True)
 
-    # Get current hour in Philippine time
+    # Current hour PH time
     ph_time = datetime.now(pytz.timezone("Asia/Manila"))
-    current_hour = ph_time.hour + 1  # +1 because you want to include the current hour
+    current_hour = ph_time.hour + 1  # include current hour
 
+    # Prepare demand data
     y_today = df_demand_today.values.flatten().copy()
     y_today[current_hour:] = np.nan
     y_prev = df_demand_prev.values.flatten().copy()
 
-    
+    # Prepare plots
     fig, ax = plt.subplots(figsize=(12, 3))
     ax.plot(hour_labels, y_prev, marker="x", linestyle="--", alpha=0.4, label="Previous Day")
     ax.plot(hour_labels, y_today, marker="o", label="Today")
+
+    latest_hour = current_hour - 1
+    if latest_hour >= 0:
+        latest_x = hour_labels[latest_hour]
+        latest_y = y_today[latest_hour]
+
+        # Blink effect: toggle color every 0.5s for 5 seconds (10 cycles)
+        for i in range(10):
+            color = "red" if i % 2 == 0 else "white"
+            ax.plot(latest_x, latest_y, marker="o", markersize=14,
+                    markerfacecolor=color, markeredgecolor=color)
+            st.pyplot(fig)
+            time.sleep(0.5)
+
     ax.set_xlabel("Hour")
     ax.set_ylabel("Demand (MW)")
     ax.set_title("Demand (MW)")
@@ -184,17 +202,29 @@ if page == "Current Day":
     plt.xticks(rotation=45)
     st.pyplot(fig)
 
+    # Frequency Table
     st.subheader("Frequency – Current Day")
     st.dataframe(df_freq_today, hide_index=True, use_container_width=True)
 
+    # Frequency plot
     y_freq_today = df_freq_today.values.flatten().copy()
     y_freq_today[y_freq_today == 0] = np.nan
-
     y_freq_plot = np.full(24, np.nan)
     y_freq_plot[:len(y_freq_today)] = y_freq_today
 
     fig2, ax2 = plt.subplots(figsize=(12, 3))
     ax2.plot(range(1, 25), y_freq_plot, marker="o", label="Today")
+
+    if latest_hour >= 0 and not np.isnan(y_freq_plot[latest_hour]):
+        # Blink effect for frequency
+        for i in range(10):
+            color = "red" if i % 2 == 0 else "white"
+            ax2.plot(latest_hour + 1, y_freq_plot[latest_hour],
+                     marker="o", markersize=14,
+                     markerfacecolor=color, markeredgecolor=color)
+            st.pyplot(fig2)
+            time.sleep(0.5)
+
     ax2.set_xticks(range(1, 25))
     ax2.set_xticklabels([f"{str(h-1).zfill(2)}00H" for h in range(1, 25)])
     ax2.set_xlabel("Hour")
@@ -205,6 +235,7 @@ if page == "Current Day":
     ax2.legend()
     plt.xticks(rotation=45)
     st.pyplot(fig2)
+
 
 
 # =========================================================
