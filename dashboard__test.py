@@ -147,7 +147,7 @@ if page == "Current Day":
     # Main content container
     st.markdown('<div class="main-content">', unsafe_allow_html=True)
 
-    # Get today's and previous day's data
+    # Today's and previous day's data
     row_idx = today.day - 1
     df_freq_today = df_freq.iloc[[row_idx]].copy().reset_index(drop=True)
     df_demand_today = df_demand.iloc[[row_idx]].copy().reset_index(drop=True)
@@ -174,30 +174,27 @@ if page == "Current Day":
     y_prev = df_demand_prev.values.flatten().copy()
 
     # -------------------------
-    # FLICKERING CURRENT DAY DEMAND PLOT
+    # COUNT-BASED FLICKERING PLOT
     # -------------------------
-    import time
-    demand_plot_placeholder = st.empty()  # placeholder for blinking plot
+    from streamlit_autorefresh import st_autorefresh
 
-    # Loop to blink indefinitely
-    while True:
-        for i in range(2):  # on/off cycle
-            fig, ax = plt.subplots(figsize=(12, 3))
+    # Fast refresh just for blinking (0.5 sec)
+    blink_count = st_autorefresh(interval=500, limit=None, key="demand_blink")
 
-            # Alternate color for blinking
-            color = "red" if i % 2 == 0 else "gray"
+    # Alternate color based on blink_count
+    color = "red" if blink_count % 2 == 0 else "gray"
 
-            ax.plot(hour_labels, y_today, marker="o", label="Today", color=color)
-            ax.plot(hour_labels, y_prev, marker="x", linestyle="--", alpha=0.4, label="Previous Day")
-            ax.set_xlabel("Hour")
-            ax.set_ylabel("Demand (MW)")
-            ax.set_title("Demand (MW) – Current Day")
-            ax.grid(True)
-            ax.legend()
-            plt.xticks(rotation=45)
+    fig, ax = plt.subplots(figsize=(12, 3))
+    ax.plot(hour_labels, y_today, marker="o", label="Today", color=color)
+    ax.plot(hour_labels, y_prev, marker="x", linestyle="--", alpha=0.4, label="Previous Day")
+    ax.set_xlabel("Hour")
+    ax.set_ylabel("Demand (MW)")
+    ax.set_title("Demand (MW) – Current Day")
+    ax.grid(True)
+    ax.legend()
+    plt.xticks(rotation=45)
 
-            demand_plot_placeholder.pyplot(fig)
-            time.sleep(0.5)  # blink speed
+    st.pyplot(fig)
 
     # -------------------------
     # FREQUENCY PLOT (unchanged)
