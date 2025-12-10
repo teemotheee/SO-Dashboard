@@ -5,6 +5,10 @@ import matplotlib.pyplot as plt
 import pytz
 from datetime import datetime, timedelta
 import os
+from streamlit_autorefresh import st_autorefresh
+
+# Refresh every 60 seconds
+st_autorefresh(interval=60000, key="auto_refresh")
 
 # =========================================================
 # PARAMETERS (GitHub-Deploy Friendly)
