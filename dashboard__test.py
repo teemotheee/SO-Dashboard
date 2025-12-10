@@ -172,16 +172,10 @@ if page == "Current Day":
     y_today[current_hour:] = np.nan
     y_prev = df_demand_prev.values.flatten().copy()
 
-    # --- Blinking effect based on current timestamp ---
-    ph_time = datetime.now(pytz.timezone("Asia/Manila"))
-    blink_color = "yellow" if ph_time.second % 2 == 0 else "red"
 
     fig, ax = plt.subplots(figsize=(12, 3))
     ax.plot(hour_labels, y_prev, marker="x", linestyle="--", alpha=0.4, label="Previous Day")
-
-    #  Blinking line for today's demand
-    ax.plot(hour_labels, y_today, marker="o", color=blink_color, linewidth=2.5, label="Today")
-
+    ax.plot(hour_labels, y_today, marker="o", label="Today")
     ax.set_xlabel("Hour")
     ax.set_ylabel("Demand (MW)")
     ax.set_title("Demand (MW)")
@@ -189,7 +183,6 @@ if page == "Current Day":
     ax.legend()
     plt.xticks(rotation=45)
     st.pyplot(fig)
-
 
     st.subheader("Frequency – Current Day")
     st.dataframe(df_freq_today, hide_index=True, use_container_width=True)
