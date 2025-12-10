@@ -161,13 +161,10 @@ if page == "Current Day":
         prev_row_idx = prev_day.day - 1
         df_demand_prev = df_demand_prev.iloc[[prev_row_idx]].copy().reset_index(drop=True)
 
-    st.subheader("Demand – " + today.strftime("%Y-%m-%d"))
+    st.subheader("Demand – Current Day")
     st.dataframe(df_demand_today, hide_index=True, use_container_width=True)
 
-    # Get current hour in Philippine time
-    ph_time = datetime.now(pytz.timezone("Asia/Manila"))
-    current_hour = ph_time.hour + 1  # +1 because you want to include the current hour
-
+    current_hour = datetime.now().hour + 1
     y_today = df_demand_today.values.flatten().copy()
     y_today[current_hour:] = np.nan
     y_prev = df_demand_prev.values.flatten().copy()
@@ -183,7 +180,7 @@ if page == "Current Day":
     plt.xticks(rotation=45)
     st.pyplot(fig)
 
-    st.subheader("Frequency – " + today.strftime("%Y-%m-%d"))
+    st.subheader("Frequency – Current Day")
     st.dataframe(df_freq_today, hide_index=True, use_container_width=True)
 
     y_freq_today = df_freq_today.values.flatten().copy()
@@ -192,7 +189,7 @@ if page == "Current Day":
     y_freq_plot = np.full(24, np.nan)
     y_freq_plot[:len(y_freq_today)] = y_freq_today
 
-    fig2, ax2 = plt.subplots(figsize(12, 3))
+    fig2, ax2 = plt.subplots(figsize=(12, 3))
     ax2.plot(range(1, 25), y_freq_plot, marker="o", label="Today")
     ax2.set_xticks(range(1, 25))
     ax2.set_xticklabels([f"{str(h-1).zfill(2)}00H" for h in range(1, 25)])
