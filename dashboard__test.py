@@ -165,40 +165,25 @@ if page == "Current Day":
     st.dataframe(df_demand_today, hide_index=True, use_container_width=True)
 
     # Get current hour in Philippine time
+
     ph_time = datetime.now(pytz.timezone("Asia/Manila"))
-    current_hour = ph_time.hour + 1  # include current hour
+    current_hour = ph_time.hour + 1  # +1 because you want to include the current hour
 
     y_today = df_demand_today.values.flatten().copy()
     y_today[current_hour:] = np.nan
     y_prev = df_demand_prev.values.flatten().copy()
 
-    # -------------------------
-    # FLICKERING CURRENT DAY DEMAND PLOT
-    # -------------------------
-    from streamlit_autorefresh import st_autorefresh
-
-    # Create a placeholder for the blinking plot
-    demand_plot_placeholder = st.empty()
-
-    # Use autorefresh count to toggle color
-    blink_count = st_autorefresh(interval=500, limit=None, key="demand_blink")  # refresh every 0.5 sec
-    color = "red" if blink_count % 2 == 0 else "gray"
-
     fig, ax = plt.subplots(figsize=(12, 3))
-    ax.plot(hour_labels, y_today, marker="o", label="Today", color=color)
     ax.plot(hour_labels, y_prev, marker="x", linestyle="--", alpha=0.4, label="Previous Day")
+    ax.plot(hour_labels, y_today, marker="o", label="Today")
     ax.set_xlabel("Hour")
     ax.set_ylabel("Demand (MW)")
-    ax.set_title("Demand (MW) – Current Day")
+    ax.set_title("Demand (MW)")
     ax.grid(True)
     ax.legend()
     plt.xticks(rotation=45)
+    st.pyplot(fig)
 
-    demand_plot_placeholder.pyplot(fig)
-
-    # -------------------------
-    # FREQUENCY PLOT (unchanged)
-    # -------------------------
     st.subheader("Frequency – " + today.strftime("%Y-%m-%d"))
     st.dataframe(df_freq_today, hide_index=True, use_container_width=True)
 
