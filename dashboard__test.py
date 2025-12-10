@@ -161,10 +161,13 @@ if page == "Current Day":
         prev_row_idx = prev_day.day - 1
         df_demand_prev = df_demand_prev.iloc[[prev_row_idx]].copy().reset_index(drop=True)
 
-    st.subheader("Demand – Current Day")
+    st.subheader("Demand – " + today.strftime("%Y-%m-%d"))
     st.dataframe(df_demand_today, hide_index=True, use_container_width=True)
 
-    current_hour = datetime.now().hour + 1
+    # Get current hour in Philippine time
+    ph_time = datetime.now(pytz.timezone("Asia/Manila"))
+    current_hour = ph_time.hour + 1  # +1 because you want to include the current hour
+
     y_today = df_demand_today.values.flatten().copy()
     y_today[current_hour:] = np.nan
     y_prev = df_demand_prev.values.flatten().copy()
