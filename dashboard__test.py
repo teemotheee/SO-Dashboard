@@ -24,13 +24,7 @@ hour_labels = [f"{str(h).zfill(2)}00H" for h in range(24)]
 # STREAMLIT PAGE CONFIG
 # =========================================================
 st.set_page_config(layout="wide", page_title="Palawan Grid Dashboard")
-# st.set_page_config(layout="wide", page_title="Palawan Grid Dashboard")
 
-# # Auto refresh every 60 seconds
-# st.markdown(
-#     "<meta http-equiv='refresh' content='60'>",
-#     unsafe_allow_html=True
-# )
 
 # =========================================================
 # HELPER FUNCTION TO LOAD EXCEL FILE
@@ -53,8 +47,13 @@ def load_month_file(month_name):
     df_freq = df_full.iloc[2:33, col_start:col_end+1].map(rounder)
     df_demand = df_full.iloc[34:65, col_start:col_end+1].map(rounder)
 
+    # Replace zero values with NaN → they will not plot in charts
+    df_freq = df_freq.replace(0, np.nan)
+    df_demand = df_demand.replace(0, np.nan)
+
     df_freq.columns = hour_labels
     df_demand.columns = hour_labels
+
     
     return df_freq, df_demand, latest_file
 
