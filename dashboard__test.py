@@ -147,6 +147,7 @@ if page == "Current Day":
     # Main content container
     st.markdown('<div class="main-content">', unsafe_allow_html=True)
 
+    # Get today's and previous day's data
     row_idx = today.day - 1
     df_freq_today = df_freq.iloc[[row_idx]].copy().reset_index(drop=True)
     df_demand_today = df_demand.iloc[[row_idx]].copy().reset_index(drop=True)
@@ -164,26 +165,43 @@ if page == "Current Day":
     st.subheader("Demand – " + today.strftime("%Y-%m-%d"))
     st.dataframe(df_demand_today, hide_index=True, use_container_width=True)
 
-    # Get current hour in Philippine time
-
+    # Prepare data for plotting
     ph_time = datetime.now(pytz.timezone("Asia/Manila"))
-    current_hour = ph_time.hour + 1  # +1 because you want to include the current hour
+    current_hour = ph_time.hour + 1  # include current hour
 
     y_today = df_demand_today.values.flatten().copy()
     y_today[current_hour:] = np.nan
     y_prev = df_demand_prev.values.flatten().copy()
 
-    fig, ax = plt.subplots(figsize=(12, 3))
-    ax.plot(hour_labels, y_prev, marker="x", linestyle="--", alpha=0.4, label="Previous Day")
-    ax.plot(hour_labels, y_today, marker="o", label="Today")
-    ax.set_xlabel("Hour")
-    ax.set_ylabel("Demand (MW)")
-    ax.set_title("Demand (MW)")
-    ax.grid(True)
-    ax.legend()
-    plt.xticks(rotation=45)
-    st.pyplot(fig)
+    # -------------------------
+    # FLICKERING CURRENT DAY DEMAND PLOT
+    # -------------------------
+    import time
+    demand_plot_placeholder = st.empty()  # placeholder for blinking plot
 
+    # Loop to blink indefinitely
+    while True:
+        for i in range(2):  # on/off cycle
+            fig, ax = plt.subplots(figsize=(12, 3))
+
+            # Alternate color for blinking
+            color = "red" if i % 2 == 0 else "gray"
+
+            ax.plot(hour_labels, y_today, marker="o", label="Today", color=color)
+            ax.plot(hour_labels, y_prev, marker="x", linestyle="--", alpha=0.4, label="Previous Day")
+            ax.set_xlabel("Hour")
+            ax.set_ylabel("Demand (MW)")
+            ax.set_title("Demand (MW) – Current Day")
+            ax.grid(True)
+            ax.legend()
+            plt.xticks(rotation=45)
+
+            demand_plot_placeholder.pyplot(fig)
+            time.sleep(0.5)  # blink speed
+
+    # -------------------------
+    # FREQUENCY PLOT (unchanged)
+    # -------------------------
     st.subheader("Frequency – " + today.strftime("%Y-%m-%d"))
     st.dataframe(df_freq_today, hide_index=True, use_container_width=True)
 
@@ -205,6 +223,7 @@ if page == "Current Day":
     ax2.legend()
     plt.xticks(rotation=45)
     st.pyplot(fig2)
+
 
 # =========================================================
 # FULL MONTH VIEW
