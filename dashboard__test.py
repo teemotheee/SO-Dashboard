@@ -27,7 +27,7 @@ st.set_page_config(layout="wide", page_title="Palawan Grid Dashboard")
 # =========================================================
 # HELPER FUNCTION TO LOAD EXCEL FILE
 # =========================================================
-@st.cache_data
+# @st.cache_data
 def load_month_file(month_name):
     excel_files = [f for f in os.listdir(folder_path)
                    if month_name.lower() in f.lower() and f.endswith((".xls", ".xlsx", ".xlsm"))]
@@ -50,7 +50,7 @@ def load_month_file(month_name):
     
     return df_freq, df_demand, latest_file
 
-@st.cache_data
+# @st.cache_data
 def load_online_units(latest_file):
     file_path = os.path.join(folder_path, latest_file)
 
