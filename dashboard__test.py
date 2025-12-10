@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 import pytz
 from datetime import datetime, timedelta
 import os
-import time 
 from streamlit_autorefresh import st_autorefresh
 import plotly.graph_objects as go
 
@@ -119,9 +118,7 @@ if df_freq is None:
 if page == "Current Day":
     st.set_page_config(layout="wide", page_title="Palawan Grid Dashboard")
 
-    # -----------------------------
-    # Fixed header styling
-    # -----------------------------
+    # Fixed header
     st.markdown("""
     <style>
     .fixed-header {
@@ -129,34 +126,33 @@ if page == "Current Day":
         top: 0;
         left: 0;
         width: 100%;
-        background-color: #001f4d;
+        background-color: #001f4d;  /* navy blue */
         color: white;
         font-size: 32px;
         font-weight: bold;
         text-align: left;
         line-height: 1.2;
-        padding-top: 60px;
-        padding-bottom: 15px;
-        padding-left: 350px;
+        padding-top: 60px;      /* top padding */
+        padding-bottom: 15px;  /* bottom padding */
+        padding-left: 350px;      /* space from the left edge */
         z-index: 9999;
     }
     .main-content {
-        padding-top: 30px;
+        padding-top: 30px; /* height of fixed header + some spacing */
     }
     </style>
     """, unsafe_allow_html=True)
 
+    # Header
     st.markdown('<div class="fixed-header">IGSOD PCC Dashboard</div>', unsafe_allow_html=True)
+
+    # Main content container
     st.markdown('<div class="main-content">', unsafe_allow_html=True)
 
-    # -----------------------------
-    # Prepare Demand and Frequency Data
-    # -----------------------------
     row_idx = today.day - 1
-    df_demand_today = df_demand.iloc[[row_idx]].copy().reset_index(drop=True)
     df_freq_today = df_freq.iloc[[row_idx]].copy().reset_index(drop=True)
+    df_demand_today = df_demand.iloc[[row_idx]].copy().reset_index(drop=True)
 
-    # Previous day demand
     prev_day = today - timedelta(days=1)
     prev_month_name = prev_day.strftime("%B")
     if prev_month_name == current_month_name:
@@ -167,89 +163,50 @@ if page == "Current Day":
         prev_row_idx = prev_day.day - 1
         df_demand_prev = df_demand_prev.iloc[[prev_row_idx]].copy().reset_index(drop=True)
 
-    # Display Demand Table
     st.subheader("Demand – " + today.strftime("%Y-%m-%d"))
     st.dataframe(df_demand_today, hide_index=True, use_container_width=True)
 
-    # Display Frequency Table
-    st.subheader("Frequency – Current Day")
-    st.dataframe(df_freq_today, hide_index=True, use_container_width=True)
-
-    # Current hour PH time
+    # Get current hour in Philippine time
     ph_time = datetime.now(pytz.timezone("Asia/Manila"))
-    current_hour = ph_time.hour + 1  # include current hour
+    current_hour = ph_time.hour + 1  # +1 because you want to include the current hour
 
-    # Demand data
     y_today = df_demand_today.values.flatten().copy()
     y_today[current_hour:] = np.nan
     y_prev = df_demand_prev.values.flatten().copy()
 
-    # Frequency data
+    
+    fig, ax = plt.subplots(figsize=(12, 3))
+    ax.plot(hour_labels, y_prev, marker="x", linestyle="--", alpha=0.4, label="Previous Day")
+    ax.plot(hour_labels, y_today, marker="o", label="Today")
+    ax.set_xlabel("Hour")
+    ax.set_ylabel("Demand (MW)")
+    ax.set_title("Demand (MW)")
+    ax.grid(True)
+    ax.legend()
+    plt.xticks(rotation=45)
+    st.pyplot(fig)
+
+    st.subheader("Frequency – Current Day")
+    st.dataframe(df_freq_today, hide_index=True, use_container_width=True)
+
     y_freq_today = df_freq_today.values.flatten().copy()
     y_freq_today[y_freq_today == 0] = np.nan
+
     y_freq_plot = np.full(24, np.nan)
     y_freq_plot[:len(y_freq_today)] = y_freq_today
 
-    hour_labels = list(range(24))  # 0–23 hours
-
-    # -----------------------------
-    # Demand Plot (Blinking)
-    # -----------------------------
-    demand_placeholder = st.empty()  # placeholder for blinking plot
-
-    for i in range(10):  # blink 10 times (5s total, 0.5s interval)
-        fig = go.Figure()
-
-        # Previous day (static)
-        fig.add_trace(go.Scatter(
-            x=hour_labels, y=y_prev,
-            mode='lines+markers',
-            name='Previous Day',
-            line=dict(dash='dash', color='blue'),
-            marker=dict(size=8)
-        ))
-
-        # Today (blinking)
-        color = 'red' if i % 2 == 0 else 'white'  # blink: red ↔ white
-        fig.add_trace(go.Scatter(
-            x=hour_labels, y=y_today,
-            mode='lines+markers',
-            name='Today',
-            line=dict(color=color, width=3),
-            marker=dict(size=10, color=color)
-        ))
-
-        fig.update_layout(
-            xaxis_title='Hour',
-            yaxis_title='Demand (MW)',
-            title='Demand – Current Day',
-            xaxis=dict(tickmode='linear'),
-            yaxis=dict(range=[min(min(y_today), min(y_prev))-50, max(max(y_today), max(y_prev))+50])
-        )
-
-        demand_placeholder.plotly_chart(fig, use_container_width=True)
-        time.sleep(0.5)  # half-second interval
-
-    # -----------------------------
-    # Frequency Plot (Static)
-    # -----------------------------
-    fig2 = go.Figure()
-    fig2.add_trace(go.Scatter(
-        x=hour_labels,
-        y=y_freq_plot,
-        mode='lines+markers',
-        name='Frequency',
-        line=dict(color='green', width=3),
-        marker=dict(size=8, color='green')
-    ))
-    fig2.update_layout(
-        xaxis_title='Hour',
-        yaxis_title='Frequency (Hz)',
-        title='Frequency – Current Day',
-        xaxis=dict(tickmode='linear'),
-        yaxis=dict(range=[50, 62])
-    )
-    st.plotly_chart(fig2, use_container_width=True)
+    fig2, ax2 = plt.subplots(figsize=(12, 3))
+    ax2.plot(range(1, 25), y_freq_plot, marker="o", label="Today")
+    ax2.set_xticks(range(1, 25))
+    ax2.set_xticklabels([f"{str(h-1).zfill(2)}00H" for h in range(1, 25)])
+    ax2.set_xlabel("Hour")
+    ax2.set_ylabel("Frequency (Hz)")
+    ax2.set_title("Frequency (Hz)")
+    ax2.set_ylim(50, 62)
+    ax2.grid(True)
+    ax2.legend()
+    plt.xticks(rotation=45)
+    st.pyplot(fig2)
 
 
 # =========================================================
