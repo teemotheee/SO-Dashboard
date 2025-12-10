@@ -166,7 +166,7 @@ if page == "Current Day":
 
     # Get current hour in Philippine time
     ph_time = datetime.now(pytz.timezone("Asia/Manila"))
-    current_hour = ph_time.hour + 1  # +1 to include current hour
+    current_hour = ph_time.hour + 1  # include current hour
 
     y_today = df_demand_today.values.flatten().copy()
     y_today[current_hour:] = np.nan
@@ -175,28 +175,26 @@ if page == "Current Day":
     # -------------------------
     # FLICKERING CURRENT DAY DEMAND PLOT
     # -------------------------
-    import time
-    demand_plot_placeholder = st.empty()  # placeholder for blinking plot
-    num_flickers = 6  # 3 on/off cycles
+    from streamlit_autorefresh import st_autorefresh
 
-    for i in range(num_flickers):
-        fig, ax = plt.subplots(figsize=(12, 3))
+    # Create a placeholder for the blinking plot
+    demand_plot_placeholder = st.empty()
 
-        # Alternate color for blinking effect
-        color = "red" if i % 2 == 0 else "gray"
+    # Use autorefresh count to toggle color
+    blink_count = st_autorefresh(interval=500, limit=None, key="demand_blink")  # refresh every 0.5 sec
+    color = "red" if blink_count % 2 == 0 else "gray"
 
-        ax.plot(hour_labels, y_today, marker="o", label="Today", color=color)
-        ax.plot(hour_labels, y_prev, marker="x", linestyle="--", alpha=0.4, label="Previous Day")
+    fig, ax = plt.subplots(figsize=(12, 3))
+    ax.plot(hour_labels, y_today, marker="o", label="Today", color=color)
+    ax.plot(hour_labels, y_prev, marker="x", linestyle="--", alpha=0.4, label="Previous Day")
+    ax.set_xlabel("Hour")
+    ax.set_ylabel("Demand (MW)")
+    ax.set_title("Demand (MW) – Current Day")
+    ax.grid(True)
+    ax.legend()
+    plt.xticks(rotation=45)
 
-        ax.set_xlabel("Hour")
-        ax.set_ylabel("Demand (MW)")
-        ax.set_title("Demand (MW) – Current Day")
-        ax.grid(True)
-        ax.legend()
-        plt.xticks(rotation=45)
-
-        demand_plot_placeholder.pyplot(fig)
-        time.sleep(0.5)  # half-second flicker
+    demand_plot_placeholder.pyplot(fig)
 
     # -------------------------
     # FREQUENCY PLOT (unchanged)
